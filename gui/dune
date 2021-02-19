@@ -1,0 +1,22 @@
+(env
+    (dev (flags (:standard -open Ocaml_nanogui_libext)))
+    (debug (flags (:standard -open Ocaml_nanogui_libext)))
+    (release (flags (:standard -open Ocaml_nanogui_libext)))
+    )
+
+(library 
+ (public_name ocaml_nanogui)
+ (libraries 
+    containers
+    ocaml_nanogui_libext
+    ppx_blob
+    rope
+    tgls
+    tgls.tgles2
+    glfw-ocaml
+    nanovg
+ )
+ (inline_tests)
+ (preprocess
+  (pps ppx_jane -allow-unannotated-ignores ppx_expect ppx_blob)))
+

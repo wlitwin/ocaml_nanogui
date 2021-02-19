@@ -1,0 +1,4 @@
+(library
+    (name ocaml_nanogui_libext)
+    (public_name ocaml_nanogui.libext)
+    )

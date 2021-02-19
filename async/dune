@@ -1,0 +1,11 @@
+(library 
+ (name ocaml_nanogui_async)
+ (public_name ocaml_nanogui.async)
+ (libraries 
+    async_kernel
+    ocaml_nanogui
+ )
+ (inline_tests)
+ (preprocess
+  (pps ppx_jane -allow-unannotated-ignores ppx_expect)))
+
