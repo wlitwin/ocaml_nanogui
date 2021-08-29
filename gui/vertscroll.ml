@@ -72,35 +72,43 @@ class vscrollpanel parent = object(self)
                 updateLayout <- false;
             );
 
-            let open Nanovg in
+            let open Gv in
             if child#visible then (
                 save ctx;
-                intersect_scissor ctx 0. 0. size.a size.b;
+                Scissor.intersect ctx ~x:0. ~y:0. ~w:size.a ~h:size.b;
                 
                 let cpos = child#position in
-                translate ctx cpos.a cpos.b;
+                Transform.translate ctx ~x:cpos.a ~y:cpos.b;
 
                 child#draw ctx;
                 restore ctx;
             );
 
             if childPreferredHeight > size.b then (
-                let paint = box_gradient ctx (size.a - 12. + 1.) (4. + 1.) 8. (size.b - 8.) 3. 4.
-                    (rgba 0 0 0 32) (rgba 0 0 0 92)
+                let paint = Paint.box_gradient ctx 
+                    ~x:(size.a - 12. + 1.) ~y:(4. + 1.) ~w:8. ~h:(size.b - 8.) ~r:3. ~f:4.
+                    ~icol:(Color.rgba ~r:0 ~g:0 ~b:0 ~a:32) ~ocol:(Color.rgba ~r:0 ~g:0 ~b:0 ~a:92)
                 in
-                begin_path ctx;
-                rounded_rect ctx (size.a - 12.) 4. 8. (size.b - 8.) 3.;
-                fill_paint ctx paint;
+                Path.begin_ ctx;
+                Path.rounded_rect ctx ~x:(size.a - 12.) ~y:4. ~w:8. ~h:(size.b - 8.) ~r:3.;
+                set_fill_paint ctx ~paint;
                 fill ctx;
 
                 let height = self#height in
                 let scrollh = height * (min 1. (height / childPreferredHeight)) in
-                let paint = box_gradient ctx (size.a - 12. - 1.) (4. + (size.b - 8. - scrollh)*scroll - 1.) 8. scrollh
-                    3. 4. (rgba 220 220 220 100) (rgba 128 128 128 100)
+                let paint = Paint.box_gradient ctx 
+                    ~x:(size.a - 12. - 1.) ~y:(4. + (size.b - 8. - scrollh)*scroll - 1.) ~w:8. ~h:scrollh
+                    ~r:3. ~f:4. 
+                    ~icol:(Color.rgba ~r:220 ~g:220 ~b:220 ~a:100) 
+                    ~ocol:(Color.rgba ~r:128 ~g:128 ~b:128 ~a:100)
                 in
-                begin_path ctx;
-                rounded_rect ctx (size.a - 12. + 1.) (4. + 1. + (size.b - 8. - scrollh)*scroll) 6. (scrollh - 2.) 2.;
-                fill_paint ctx paint;
+                Path.begin_ ctx;
+                Path.rounded_rect ctx 
+                    ~x:(size.a - 12. + 1.)
+                    ~y:(4. + 1. + (size.b - 8. - scrollh)*scroll)
+                    ~w:6. 
+                    ~h:(scrollh - 2.) ~r:2.;
+                set_fill_paint ctx ~paint;
                 fill ctx;
             )
         )

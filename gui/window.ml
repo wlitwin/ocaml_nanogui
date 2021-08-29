@@ -38,54 +38,56 @@ class window parent title = object(self)
         let cr = theme#windowCornerRadius in
         let hh = theme#windowHeaderHeight in
 
-        let open Nanovg in
+        let open Gv in
         save ctx;
-        begin_path ctx;
-        rounded_rect ctx position.a position.b size.a size.b cr;
-        fill_color ctx (if mouseFocus then theme#windowFillFocused else theme#windowFillUnfocused);
+        Path.begin_ ctx;
+        Path.rounded_rect ctx ~x:position.a ~y:position.b ~w:size.a ~h:size.b ~r:cr;
+        set_fill_color ctx ~color:(if mouseFocus then theme#windowFillFocused else theme#windowFillUnfocused);
         fill ctx;
 
         (* Drop shadow *)
-        let shadow_paint = box_gradient ctx position.a position.b 
-            size.a size.b (cr*.2.) (ds*.2.) theme#dropShadow theme#transparent 
+        let shadow_paint = Paint.box_gradient ctx ~x:position.a ~y:position.b 
+            ~w:size.a ~h:size.b ~r:(cr*.2.) ~f:(ds*.2.) 
+            ~icol:theme#dropShadow 
+            ~ocol:theme#transparent 
         in
         save ctx;
-        reset_scissor ctx;
-        begin_path ctx;
-        rect ctx (position.a-.ds) (position.b-.ds) (size.a+.2.*.ds) (size.b*.2.*.ds);
-        rounded_rect ctx position.a position.b size.a size.b cr;
-        path_winding ctx Solidity.(hole);
-        fill_paint ctx shadow_paint;
+        Scissor.reset ctx;
+        Path.begin_ ctx;
+        Path.rect ctx ~x:(position.a-.ds) ~y:(position.b-.ds) ~w:(size.a+.2.*.ds) ~h:(size.b*.2.*.ds);
+        Path.rounded_rect ctx ~x:position.a ~y:position.b ~w:size.a ~h:size.b ~r:cr;
+        Path.winding ctx ~winding:Winding.CW;
+        set_fill_paint ctx ~paint:shadow_paint;
         fill ctx;
         restore ctx;
 
         if not String.(is_empty title) then (
             (* Header *)
-            let header_paint = linear_gradient ctx position.a position.b position.a 
-                (position.b+.size.b +. hh) theme#windowHeaderGradientTop theme#windowHeaderGradientBot
+            let header_paint = Paint.linear_gradient ctx ~sx:position.a ~sy:position.b ~ex:position.a 
+                ~ey:(position.b+.size.b +. hh) ~icol:theme#windowHeaderGradientTop ~ocol:theme#windowHeaderGradientBot
             in
 
-            begin_path ctx;
-            rounded_rect ctx position.a position.b size.a hh cr;
-            fill_paint ctx header_paint;
+            Path.begin_ ctx;
+            Path.rounded_rect ctx ~x:position.a ~y:position.b ~w:size.a ~h:hh ~r:cr;
+            set_fill_paint ctx ~paint:header_paint;
             fill ctx;
 
-            begin_path ctx;
-            rounded_rect ctx position.a position.b size.a hh cr;
-            stroke_color ctx theme#windowHeaderSepTop;
+            Path.begin_ ctx;
+            Path.rounded_rect ctx ~x:position.a ~y:position.b ~w:size.a ~h:hh ~r:cr;
+            set_stroke_color ctx ~color:theme#windowHeaderSepTop;
             stroke ctx;
 
-            font_size ctx 18.;
-            font_face ctx "mono";
-            text_align ctx Align.(center lor middle);
+            Text.set_size ctx ~size:18.;
+            Text.set_font_face ctx ~name:"mono";
+            Text.set_align ctx ~align:Align.(center lor middle);
             
-            font_blur ctx 2.;
-            fill_color ctx theme#dropShadow;
-            text ctx (position.a+.size.a*.0.5) (position.b+.hh*.0.5) title null_char |> ignore;
+            Text.set_blur ctx ~blur:2.;
+            set_fill_color ctx ~color:theme#dropShadow;
+            Text.text ctx ~x:(position.a+.size.a*.0.5) ~y:(position.b+.hh*.0.5) title;
             
-            font_blur ctx 0.;
-            fill_color ctx (if focused then theme#windowTitleFocused else theme#windowTitleUnfocused);
-            text ctx (position.a+.size.a*.0.5) (position.b+.hh*.0.5-.1.) title null_char |> ignore;
+            Text.set_blur ctx ~blur:0.;
+            set_fill_color ctx ~color:(if focused then theme#windowTitleFocused else theme#windowTitleUnfocused);
+            Text.text ctx ~x:(position.a+.size.a*.0.5) ~y:(position.b+.hh*.0.5-.1.) title;
         );
 
         restore ctx;
@@ -121,16 +123,15 @@ class window parent title = object(self)
         begin match panel with None -> () | Some p -> p#setVisible false end;
         let sz = super#preferredSize ctx in
         begin match panel with None -> () | Some p -> p#setVisible true end;
-        let open Nanovg in
-        font_size ctx 18.;
-        font_face ctx "mono";
-        let bounds = Ctypes.(allocate_n float ~count:4) in
-        text_bounds ctx 0. 0. title null_char bounds |> ignore;
+        let open Gv in
+        Text.set_size ctx ~size:18.;
+        Text.set_font_face ctx ~name:"mono";
+        let b = Text.bounds ctx ~x:0. ~y:0. title in
 
-        let minx = Ctypes.(!@bounds) in
-        let miny = Ctypes.(!@(bounds +@ 1)) in
-        let maxx = Ctypes.(!@(bounds +@ 2)) in
-        let maxy = Ctypes.(!@(bounds +@ 3)) in
+        let minx = b.box.xmin in
+        let miny = b.box.ymin in
+        let maxx = b.box.xmax in
+        let maxy = b.box.xmin in
 
         Printf.printf "%f %f %f %f\n%!" minx maxx miny maxy;
 

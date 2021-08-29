@@ -118,35 +118,36 @@ class popup (anchor : widget) = object(self)
             let cr = theme#windowCornerRadius in
 
             let open Float in
-            let open Nanovg in
+            let open Gv in
             save ctx;
-            reset_scissor ctx;
+            Gv.Scissor.reset ctx;
 
-            let shadow_paint = box_gradient ctx 0. 0. size.a size.b (cr*2.) (ds*2.)
-                theme#dropShadow theme#transparent
+            let shadow_paint = Paint.box_gradient ctx 
+                ~x:0. ~y:0. ~w:size.a ~h:size.b ~r:(cr*2.) ~f:(ds*2.)
+                ~icol:theme#dropShadow ~ocol:theme#transparent
             in
 
             (* Drop shadow *)
-            begin_path ctx;
-            rect ctx ~-ds ~-ds (size.a+2.*ds) (size.b+2.*ds);
-            rounded_rect ctx 0. 0. size.a size.b cr;
-            path_winding ctx Solidity.hole;
-            fill_paint ctx shadow_paint;
+            Path.begin_ ctx;
+            Path.rect ctx ~x:~-ds ~y:~-ds ~w:(size.a+2.*ds) ~h:(size.b+2.*ds);
+            Path.rounded_rect ctx ~x:0. ~y:0. ~w:size.a ~h:size.b ~r:cr;
+            Path.winding ctx ~winding:Winding.CW;
+            set_fill_paint ctx ~paint:shadow_paint;
             fill ctx;
 
             (* Window *)
-            begin_path ctx;
-            rounded_rect ctx 0. 0. size.a size.b cr;
+            Path.begin_ ctx;
+            Path.rounded_rect ctx ~x:0. ~y:0. ~w:size.a ~h:size.b ~r:cr;
 
             let sign, base = match side with
                      | Left -> 1., Vec2.mk size.a anchorHeight
                      | _ -> -1., Vec2.mk 0. anchorHeight
             in
             
-            move_to ctx (base.a+15.*sign) base.b;
-            move_to ctx (base.a-sign) (base.b-15.);
-            move_to ctx (base.a-sign) (base.b+15.);
-            fill_color ctx theme#windowPopup;
+            Path.move_to ctx ~x:(base.a+15.*sign) ~y:base.b;
+            Path.move_to ctx ~x:(base.a-sign) ~y:(base.b-15.);
+            Path.move_to ctx ~x:(base.a-sign) ~y:(base.b+15.);
+            set_fill_color ctx ~color:theme#windowPopup;
             fill ctx;
 
             super#draw ctx;

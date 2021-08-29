@@ -27,7 +27,7 @@ class choice parent value = object(_self)
 
     method! draw ctx =
         super#draw ctx;
-        let open Nanovg in
+        let open Gv in
         
         if selected || mouseFocus then (
             let color = 
@@ -35,9 +35,9 @@ class choice parent value = object(_self)
                 then rgba 128 128 128 128
                 else rgba 164 164 164 128
             in
-            begin_path ctx;
-            rect ctx 0. 0. size.a size.b;
-            fill_color ctx color;
+            Path.begin_ ctx;
+            Path.rect ctx ~x:0. ~y:0. ~w:size.a ~h:size.b;
+            set_fill_color ctx ~color;
             fill ctx;
         )
 end

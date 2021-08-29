@@ -1,12 +1,10 @@
 open Widget
 
-module NV = Nanovg
-
 class label parent text font_size = object(self)
     inherit widget parent as super
 
     val mutable text : string = text
-    val mutable color : color = NV.rgb 200 200 200
+    val mutable color : color = Gv.Color.rgb ~r:200 ~g:200 ~b:200
 
     method color = color
     method setColor c = color <- c
@@ -24,31 +22,29 @@ class label parent text font_size = object(self)
     method! preferredSize ctx = 
         if String.is_empty text then Vec2.zero
         else (
-            NV.font_face ctx "mono";
-            NV.font_size ctx self#fontSize;
+            Gv.Text.set_font_face ctx ~name:"mono";
+            Gv.Text.set_size ctx ~size:self#fontSize;
             match self#fixedSize with
             | Some fs ->
-                let bounds = Ctypes.(allocate_n float ~count:4) in
-                NV.text_align ctx NV.Align.(left lor top);
-                NV.text_box_bounds ctx 0. 0. fs.a text NV.null_char bounds;
-                let _, miny, _, maxy = split_bounds bounds in
-                Vec2.(mk fs.a (maxy -. miny))
+                Gv.Text.set_align ctx ~align:Gv.Align.(left lor top);
+                let b = Gv.Text.box_bounds ctx ~x:0. ~y:0. ~break_width:fs.a text in
+                Vec2.(mk fs.a (b.ymax -. b.ymin))
             | None ->
-                NV.text_align ctx NV.Align.(left lor middle);
-                let bounds = NV.text_bounds ctx 0. 0. text NV.null_char NV.null_float +. 2. in
+                Gv.Text.set_align ctx ~align:Gv.Align.(left lor middle);
+                let bounds = (Gv.Text.bounds ctx ~x:0. ~y:0. text).advance +. 2. in
                 Vec2.(mk bounds self#fontSize);
         )
 
     method! draw ctx =
         super#draw ctx;
-        NV.font_face ctx "mono";
-        NV.font_size ctx self#fontSize;
-        NV.fill_color ctx color;
+        Gv.Text.set_font_face ctx ~name:"mono";
+        Gv.Text.set_size ctx ~size:self#fontSize;
+        Gv.set_fill_color ctx ~color;
         match self#fixedSize with
         | Some fs ->
-            NV.text_align ctx NV.Align.(left lor top);
-            NV.text_box ctx 0. (fs.b*.0.5) fs.a text NV.null_char;
+            Gv.Text.set_align ctx ~align:Gv.Align.(left lor top);
+            Gv.Text.text_box ctx ~x:0. ~y:(fs.b*.0.5) ~break_width:fs.a text;
         | None ->
-            NV.text_align ctx NV.Align.(left lor middle);
-            NV.text ctx 0. (size.b*.0.5) text NV.null_char |> ignore;
+            Gv.Text.set_align ctx ~align:Gv.Align.(left lor middle);
+            Gv.Text.text ctx ~x:0. ~y:(size.b*.0.5) text;
 end

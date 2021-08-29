@@ -2,9 +2,9 @@ open Widget
 
 type spin_area = None | Top | Bottom
 
-let glyph_pos_at glyphs ~len ~index =
+let glyph_pos_at (glyphs : Gv.Text.glyph_position array) ~len ~index =
     if index < 0 || index >= len then 0.
-    else Ctypes.(getf !@(glyphs +@ index) Nanovg.Glyph_position.x)
+    else glyphs.(index).x
 
 let has_mod mods value = 
     List.mem mods value
@@ -107,9 +107,9 @@ class textbox parent in_value = object(self)
     method setCallback c = callback <- c
 
     method! preferredSize ctx =
-        let open Nanovg in
+        let open Gv in
         let size = Vec2.mk 0. (self#fontSize*.1.4) in
-        let ts = text_bounds ctx 0. 0. valueTemp null_char null_float in
+        let ts = (Text.bounds ctx ~x:0. ~y:0. valueTemp).advance in
         Vec2.mk (size.b +. ts) size.b
 
     method pasteFromClipboard =  
@@ -301,7 +301,7 @@ class textbox parent in_value = object(self)
         ) else
             false
 
-    method positionToCursorIndex posx lastx glyphs len =
+    method positionToCursorIndex posx lastx (glyphs : Gv.Text.glyph_position array) len =
         let cursorIdx = ref 0 in
         let caretx = glyph_pos_at glyphs ~len ~index:!cursorIdx |> ref in
         for j=1 to len-1 do
@@ -322,7 +322,7 @@ class textbox parent in_value = object(self)
         else if index >= len then lastx
         else glyph_pos_at glyphs ~len ~index
 
-    method updateCursor offset lastx glyphs size =
+    method updateCursor offset lastx (glyphs : Gv.Text.glyph_position array) size =
         if (mouseDownPos.a <> ~-.1.) then (
             if has_mod mouseDownModifier GLFW.Shift then (
                 if selectionPos = ~-1 then (
@@ -350,30 +350,32 @@ class textbox parent in_value = object(self)
         )
 
     method drawBackground ctx =
-        let open Nanovg in
+        let open Gv in
         let open Float in
 
-        let box_grad color1 color2 = box_gradient ctx 1. 2. 
-                 (size.a-2.) (size.b-2.) 3. 4. color1 color2
+        let box_grad color1 color2 = Paint.box_gradient ctx 
+            ~x:1. ~y:2. 
+            ~w:(size.a-2.) ~h:(size.b-2.) ~r:3. ~f:4. 
+            ~icol:color1 ~ocol:color2
         in
 
         let bg = box_grad (rgba 255 255 255 32) (rgba 32 32 32 32) in
         let fg2 = box_grad (rgba 150 150 150 32) (rgba 32 32 32 32) in
 
-        begin_path ctx;
-        rounded_rect ctx 1. 2. (size.a-2.) (size.b-2.) 3.;
+        Path.begin_ ctx;
+        Path.rounded_rect ctx ~x:1. ~y:2. ~w:(size.a-2.) ~h:(size.b-2.) ~r:3.;
 
         if editable && self#focused then (
-            fill_paint ctx fg2
+            set_fill_paint ctx ~paint:fg2
         ) else (
-            fill_paint ctx bg;
+            set_fill_paint ctx ~paint:bg;
         );
         
         fill ctx;
 
-        begin_path ctx;
-        rounded_rect ctx 0.5 0.5 (size.a-1.) (size.b-1.) 2.5;
-        stroke_color ctx (rgba 0 0 0 48);
+        Path.begin_ ctx;
+        Path.rounded_rect ctx ~x:0.5 ~y:0.5 ~w:(size.a-1.) ~h:(size.b-1.) ~r:2.5;
+        set_stroke_color ctx ~color:(Color.rgba ~r:0 ~g:0 ~b:0 ~a:48);
         stroke ctx;
 
     method value = valueTemp
@@ -386,7 +388,7 @@ class textbox parent in_value = object(self)
     method! draw ctx =
         super#draw ctx;
         self#drawBackground ctx;
-        let open Nanovg in
+        let open Gv in
         let open Float in
 
         let align = match alignment with
@@ -402,23 +404,27 @@ class textbox parent in_value = object(self)
         in
 
         let fontSize = self#fontSize in
-        text_align ctx align;
-        font_size ctx fontSize;
+        Text.set_align ctx ~align;
+        Text.set_size ctx ~size:fontSize;
 
         let pad_x = 8. in
         let size = Vec2.mk (size.a - 2.*pad_x) size.b in
 
-        let tw = text_bounds ctx 0. 0. valueTemp null_char null_float in
+        let tw = (Text.bounds ctx ~x:0. ~y:0. valueTemp).advance in
         let center = Vec2.((size * 0.5)) in
         let text_pos = Vec2.mk (center.a -. tw*.0.5) (center.b-.1.) in
 
         (* compute text offset *)
-        let max_glyphs = String.length valueTemp in
-        let glyphs = Ctypes.(allocate_n Nanovg.glyph_position ~count:max_glyphs) in
-        let bounds = Ctypes.(allocate_n float ~count:4) in
-        let nglyphs = text_glyph_positions ctx (tw*0.5) text_pos.b valueTemp null_char glyphs max_glyphs in
-        text_bounds ctx (tw*0.5) 0. valueTemp null_char bounds |> ignore;
-        let _minx, miny, maxx, maxy = split_bounds bounds in
+        let max_glyphs : int = String.length valueTemp in
+        let glyphs : Text.glyph_position array = 
+            Stdlib.Array.make max_glyphs Text.empty_glyph_position 
+        in
+        let nglyphs = Text.glyph_positions ctx ~x:(tw*0.5) ~y:text_pos.b ~glyphs valueTemp in
+        let b = Text.bounds ctx ~x:(tw*0.5) ~y:0. valueTemp in
+
+        let maxx = b.box.xmax in
+        let maxy = b.box.ymax in
+        let miny = b.box.ymin in
 
         (* Drag, click, selections *)
         self#updateCursor (position.a - textOffset + pad_x) maxx glyphs nglyphs;
@@ -443,20 +449,20 @@ class textbox parent in_value = object(self)
                 let selx = (self#cursorIndexToPosition selectionPos maxx glyphs nglyphs) - textOffset + pad_x in
                 let caretx, selx = if caretx > selx then selx, caretx else caretx, selx in
 
-                begin_path ctx;
-                fill_color ctx (rgba 255 255 255 80);
-                rect ctx (caretx) offset_y (selx - caretx) line_h;
+                Path.begin_ ctx;
+                set_fill_color ctx ~color:(Color.rgba ~r:255 ~g:255 ~b:255 ~a:80);
+                Path.rect ctx ~x:(caretx) ~y:offset_y ~w:(selx - caretx) ~h:line_h;
                 fill ctx;
             );
 
-            begin_path ctx;
-            move_to ctx caretx offset_y;
-            line_to ctx caretx (size.b - offset_y);
-            stroke_color ctx (rgba 255 192 0 255);
-            stroke_width ctx 1.5;
+            Path.begin_ ctx;
+            Path.move_to ctx ~x:caretx ~y:offset_y;
+            Path.line_to ctx ~x:caretx ~y:(size.b - offset_y);
+            set_stroke_color ctx ~color:(Color.rgba ~r:255 ~g:192 ~b:0 ~a:255);
+            set_stroke_width ctx ~width:1.5;
             stroke ctx;
         );
 
-        fill_color ctx text_color;
-        text ctx (tw*0.5 - textOffset+pad_x) text_pos.b valueTemp null_char |> ignore;
+        set_fill_color ctx ~color:text_color;
+        Text.text ctx ~x:(tw*0.5 - textOffset+pad_x) ~y:text_pos.b valueTemp;
 end

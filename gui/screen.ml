@@ -3,13 +3,11 @@
 open Widget
 open Tgles2
 
-module NV = Nanovg
-
 class screen initial_size nvg_context glfw_window = object(self)
     inherit widget None as super
 
     val mutable caption : string = "GUI"
-    val mutable background : color = Nanovg.(rgb 64 64 64)
+    val mutable background : color = Gv.Color.(rgb ~r:64 ~g:64 ~b:64)
     val mutable resizeCallback : Vec2.t -> unit = fun _ -> ()
     val mutable mousePos : Vec2.t = Vec2.zero
     val mutable nvgContext : graphics_context = nvg_context
@@ -241,13 +239,15 @@ class screen initial_size nvg_context glfw_window = object(self)
 
             let fbw, fbh = GLFW.getFramebufferSize ~window in
             let ww, wh = GLFW.getWindowSize ~window in
-            let ratio = Float.(of_int fbw / of_int ww) in
+            let ww = float ww in
+            let wh = float wh in
+            let ratio = (float fbw /. ww) in
             pixelRatio <- ratio;
             Gl.viewport 0 0 fbw fbh;
-            Nanovg.begin_frame nvgContext ww wh pixelRatio;
+            Gv.begin_frame nvgContext ~width:ww ~height:wh ~device_ratio:pixelRatio;
 
             (*
-            NV.(
+            Gv.(
                 let ctx = nvgContext in
             begin_path ctx;
             rect ctx 0. 0. size.a size.b;
@@ -256,7 +256,7 @@ class screen initial_size nvg_context glfw_window = object(self)
             );
             *)
 
-            Nanovg.translate nvgContext position.a position.b;
+            Gv.Transform.translate nvgContext ~x:position.a ~y:position.b;
             self#draw nvgContext;
 
             (* TODO - allow tooltip to be arbitrary widget *)
@@ -268,45 +268,45 @@ class screen initial_size nvg_context glfw_window = object(self)
                 widget >>= fun widget ->
                 widget#tooltip >>| fun tooltip ->
                 let tooltip_width = 150. in
-                let bounds = Ctypes.(allocate_n float ~count:4) in
-                let open Nanovg in
+                let open Gv in
                 let nvg = nvgContext in
-                font_face nvg "mono";
-                font_size nvg 15.;
-                text_align nvg Align.(left lor top);
-                text_line_height nvg 1.1;
+                Text.set_font_face nvg ~name:"mono";
+                Text.set_size nvg ~size:15.;
+                Text.set_align nvg ~align:Align.(left lor top);
+                Text.set_line_height nvg ~height:1.1;
                 let open Float in
                 let pos = Vec2.(widget#absolutePosition + mk (widget#width*.0.5) (widget#height+.10.)) in
-                text_bounds nvg pos.a pos.b tooltip null_char bounds |> ignore;
-                let get_bounds n = Ctypes.(!@(bounds +@ n)) in
+                let b = Text.bounds nvg ~x:pos.a ~y:pos.b tooltip in
                 let h = 
-                    let h = (get_bounds 2 - get_bounds 0)*0.5 in
+                    (* h ? uses x values *)
+                    let h = (b.box.xmax - b.box.xmin)*0.5 in
                     if Float.(h > tooltip_width*0.5) then (
-                        text_align nvg Align.(left lor top);
-                        text_box_bounds nvg pos.a pos.b tooltip_width tooltip null_char bounds;
-                        (get_bounds 2 - get_bounds 0)*0.5
+                        Text.set_align nvg ~align:Align.(left lor top);
+                        let b = Text.box_bounds nvg ~x:pos.a ~y:pos.b ~break_width:tooltip_width tooltip in
+                        (b.xmax - b.xmin)*0.5
                     ) else h
                 in
-                global_alpha nvg Float.((min 1. (2.*(elapsed-0.4)))*0.8);
-                begin_path nvg;
-                fill_color nvg (rgba 0 0 0 255);
-                rounded_rect nvg (get_bounds 0 - 4. - h)
-                                 (get_bounds 1 - 4.)
-                                 (get_bounds 2 - get_bounds 0 + 8.)
-                                 (get_bounds 3 - get_bounds 1 + 8.)
-                                 3.;
+                Global.set_alpha nvg ~alpha:Float.((min 1. (2.*(elapsed-0.4)))*0.8);
+                Path.begin_ nvg;
+                set_fill_color nvg ~color:Color.black;
+                Path.rounded_rect nvg 
+                    ~x:(b.box.xmin - 4. - h)
+                    ~y:(b.box.ymin - 4.)
+                    ~w:(b.box.xmax - b.box.xmin + 8.)
+                    ~h:(b.box.ymax - b.box.ymin + 8.)
+                    ~r:3.;
                 let px = pos.a in
-                move_to nvg px (get_bounds 1 - 10.);
-                line_to nvg (px + 7.) (get_bounds 1 + 1.);
-                line_to nvg (px - 7.) (get_bounds 1 + 1.);
+                Path.move_to nvg ~x:px ~y:(b.box.ymin - 10.);
+                Path.line_to nvg ~x:(px + 7.) ~y:(b.box.ymin + 1.);
+                Path.line_to nvg ~x:(px - 7.) ~y:(b.box.ymin + 1.);
                 fill nvg;
 
-                fill_color nvg (rgb 255 255 255);
-                font_blur nvg 0.;
-                text_box nvg (pos.a-h) pos.b tooltip_width tooltip null_char;
+                set_fill_color nvg ~color:Color.white;
+                Text.set_blur nvg ~blur:0.;
+                Text.text_box nvg ~x:(pos.a-h) ~y:pos.b ~break_width:tooltip_width tooltip;
             ) |> ignore;
 
-            Nanovg.end_frame nvgContext;
+            Gv.end_frame nvgContext;
         )
 end
 

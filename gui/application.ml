@@ -17,6 +17,8 @@ module GLFWExtras = struct
   ;;
 end
 
+module Gv = Graphv_gles2_native
+
 let init resources =
     let errorcb error desc =
       Printf.printf "GLFW error %d: %s\n%!" error desc
@@ -31,11 +33,6 @@ let init resources =
     {resources}
 ;;
 
-(* Don't let the OCaml GC free the font memory arrays *)
-let mono_keep_alive_ref = ref None
-let icon_keep_alive_ref = ref None
-
-exception Failed_to_load_font of string
 let create_screen ?(swap_interval=1) ~title ~width ~height {resources=_} =
     (* TODO - is sharing the context faster? *)
     let window = GLFW.createWindow ~width ~height ~title () in
@@ -45,17 +42,13 @@ let create_screen ?(swap_interval=1) ~title ~width ~height {resources=_} =
 
     (* Create nanoVG *)
     let nvg =
-        let open Nanovg.Create_flags in
-        try
-            Nanovg.create_gles2 (antialias lor stencil_strokes lor debug)
-        with Nanovg.Memory_error ->
-            Caml.print_endline "Could not initialize nanoVG\n";
-            Caml.exit ~-1;
+        let open Gv.CreateFlags in
+        Gv.create ~flags:(antialias lor stencil_strokes lor debug) ()
     in
 
     (*
     let add_font name path =
-        let font = Nanovg.create_font nvg name path in
+        let font = Gv.create_font nvg name path in
         if font < 0 then (
             raise (Failed_to_load_font name)
         );
@@ -64,17 +57,8 @@ let create_screen ?(swap_interval=1) ~title ~width ~height {resources=_} =
     add_font "icons" resources.icon_font;
     *)
 
-    let add_font_mem name blob keep_alive_ref =
-        let blob_array = Ctypes.CArray.of_string blob in
-        keep_alive_ref := Some blob_array;
-        let start_ptr = Ctypes.CArray.start blob_array in
-        let font = Nanovg.create_font_mem nvg name Ctypes.(start_ptr |> to_voidp |> from_voidp uchar) Ctypes.CArray.(length blob_array) 1 in
-        if font < 0 then (
-            raise (Failed_to_load_font name)
-        )
-    in
-    add_font_mem "mono" Font_blobs.ubuntu_mono mono_keep_alive_ref;
-    add_font_mem "icons" Font_blobs.entypo icon_keep_alive_ref;
+    Gv.Text.create nvg ~name:"mono" ~file:"./assets/UbuntuMono-Regular.ttf" |> ignore;
+    Gv.Text.create nvg ~name:"icons" ~file:"./assets/entypo.ttf" |> ignore;
 
     let open Screen in
     let screen = new screen Vec2.(mk (float width) (float height)) nvg window in

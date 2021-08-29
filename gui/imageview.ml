@@ -3,17 +3,14 @@ open Widget
 class imageview parent img = object(self)
     inherit widget parent
 
-    val mutable image : int = img
+    val mutable image : Gv.Image.image = img
 
     method image = image
 
     method private imageSize ctx =
-        let open Nanovg in
-        let open Ctypes in
-        let isize = allocate_n int ~count:2 in
-        image_size ctx image isize Ctypes.(isize +@ 1);
-        let w = Float.of_int !@isize in
-        let h = Float.of_int !@(isize +@ 1) in
+        let w, h = Gv.Image.size ctx image in
+        let w = float w in
+        let h = float h in
         w, h
 
     method! preferredSize ctx =
@@ -24,12 +21,14 @@ class imageview parent img = object(self)
             Vec2.mk w h
 
     method! draw ctx =
-        let open Nanovg in
+        let open Gv in
 
-        let paint = image_pattern ctx 0. 0. size.a size.b 0. image 1. in
+        let paint = Paint.image_pattern ctx 
+            ~cx:0. ~cy:0. ~w:size.a ~h:size.b ~angle:0. ~image:image ~alpha:1.
+        in
 
-        begin_path ctx;
-        rect ctx 0. 0. size.a size.b;
-        fill_paint ctx paint;
+        Path.begin_ ctx;
+        Path.rect ctx ~x:0. ~y:0. ~w:size.a ~h:size.b;
+        set_fill_paint ctx ~paint;
         fill ctx;
 end

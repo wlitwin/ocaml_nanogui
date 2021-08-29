@@ -4,7 +4,7 @@ open Float
 class glcanvas parent = object(self)
     inherit widget parent as super
 
-    val mutable bgColor : color = Nanovg.rgb 0 0 0
+    val mutable bgColor : color = Gv.Color.black
     val mutable drawBorder : bool = true
     val mutable drawCallback : graphics_context -> unit = (fun _ -> ())
 
@@ -18,14 +18,14 @@ class glcanvas parent = object(self)
     method setDrawBorder s = drawBorder <- s
 
     method drawBorderHelper (ctx : graphics_context) : unit =
-        let open Nanovg in
+        let open Gv in
         let corner = theme#windowCornerRadius in
-        begin_path ctx;
-        stroke_width ctx 1.;
-        stroke_color ctx theme#borderLight;
-        rounded_rect ctx 0.5 0.5 (size.a - 1.) (size.b - 1.) corner;
-        stroke_color ctx theme#borderDark;
-        rounded_rect ctx 0. 0. (size.a - 1.5) (size.b - 1.5) corner;
+        Path.begin_ ctx;
+        set_stroke_width ctx ~width:1.;
+        set_stroke_color ctx ~color:theme#borderLight;
+        Path.rounded_rect ctx ~x:0.5 ~y:0.5 ~w:(size.a - 1.) ~h:(size.b - 1.) ~r:corner;
+        set_stroke_color ctx ~color:theme#borderDark;
+        Path.rounded_rect ctx ~x:0. ~y:0. ~w:(size.a - 1.5) ~h:(size.b - 1.5) ~r:corner;
         stroke ctx;
 
     method drawGL (ctx : graphics_context) =
@@ -99,8 +99,7 @@ class glcanvas parent = object(self)
         ) else ( 
             Gl.scissor x y w h;
          ); 
-        let module CH = ColorHelper in
-        Gl.clear_color CH.(r bgColor) CH.(g bgColor) CH.(b bgColor) CH.(a bgColor);
+        Gl.clear_color bgColor.r bgColor.g bgColor.b bgColor.a;
         Gl.clear Gl.(color_buffer_bit lor depth_buffer_bit lor stencil_buffer_bit);
         
         self#drawGL ctx;

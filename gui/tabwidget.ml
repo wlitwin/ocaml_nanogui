@@ -98,19 +98,19 @@ class tabwidget parent = object(self)
     method! draw ctx =
 
         super#draw ctx;
-        let open Nanovg in
+        let open Gv in
 
         let open Float in
         let pos = content#position in
         let size = content#size in
         let corner = theme#buttonCornerRadius in
-        begin_path ctx;
-        stroke_width ctx 1.;
-        rounded_rect ctx (pos.a-1.5) (pos.b-1.5) (size.a+1.) (size.b+1.) corner;
-        stroke_color ctx theme#borderLight;
+        Path.begin_ ctx;
+        set_stroke_width ctx ~width:1.;
+        Path.rounded_rect ctx ~x:(pos.a-1.5) ~y:(pos.b-1.5) ~w:(size.a+1.) ~h:(size.b+1.) ~r:corner;
+        set_stroke_color ctx ~color:theme#borderLight;
         stroke ctx;
 
-        rounded_rect ctx (pos.a-0.5) (pos.b-0.5) (size.a+1.5) (size.b+1.5) corner;
-        stroke_color ctx theme#borderDark;
+        Path.rounded_rect ctx ~x:(pos.a-0.5) ~y:(pos.b-0.5) ~w:(size.a+1.5) ~h:(size.b+1.5) ~r:corner;
+        set_stroke_color ctx ~color:theme#borderDark;
         stroke ctx;
 end

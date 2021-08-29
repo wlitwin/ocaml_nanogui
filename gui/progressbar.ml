@@ -14,26 +14,29 @@ class progressbar parent = object
 
     method! draw ctx =
         super#draw ctx;
-        let open Nanovg in
+        let open Gv in
         let open Float in
 
         let paint = 
-            box_gradient ctx 1. 1. (size.a-2.) size.b 3. 4.
-            (rgba 0 0 0 32) (rgba 0 0 0 92)
+            Paint.box_gradient ctx ~x:1. ~y:1. ~w:(size.a-2.) ~h:size.b ~r:3. ~f:4.
+            ~icol:(Color.rgba ~r:0 ~g:0 ~b:0 ~a:32) 
+            ~ocol:(Color.rgba ~r:0 ~g:0 ~b:0 ~a:92)
         in
-        begin_path ctx;
-        rounded_rect ctx 0. 0. size.a size.b 3.;
-        fill_paint ctx paint;
+        Path.begin_ ctx;
+        Path.rounded_rect ctx ~x:0. ~y:0. ~w:size.a ~h:size.b ~r:3.;
+        set_fill_paint ctx ~paint;
         fill ctx;
 
         let bar_pos = (size.a - 2.) * value in
 
-        let paint = box_gradient ctx 0. 0. (bar_pos+1.5) (size.b-1.) 3. 4.
-            (rgba 220 220 220 100) (rgba 128 128 128 100)
+        let paint = Paint.box_gradient ctx 
+            ~x:0. ~y:0. ~w:(bar_pos+1.5) ~h:(size.b-1.) ~r:3. ~f:4.
+            ~icol:(Color.rgba ~r:220 ~g:220 ~b:220 ~a:100) 
+            ~ocol:(Color.rgba ~r:128 ~g:128 ~b:128 ~a:100)
         in
 
-        begin_path ctx;
-        rounded_rect ctx 1. 1. bar_pos (size.b-2.) 3.;
-        fill_paint ctx paint;
+        Path.begin_ ctx;
+        Path.rounded_rect ctx ~x:1. ~y:1. ~w:bar_pos ~h:(size.b-2.) ~r:3.;
+        set_fill_paint ctx ~paint;
         fill ctx;
 end

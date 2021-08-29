@@ -212,17 +212,17 @@ class multilineTextbox_inner parent = object(self)
             false
 
 	method! draw ctx =
-		let open Nanovg in
+		let open Gv in
 		
-		begin_path ctx;	
-		rect ctx 0. 0. size.a size.b;
-		fill_color ctx (rgba 32 32 32 255);
+		Path.begin_ ctx;	
+		Path.rect ctx ~x:0. ~y:0. ~w:size.a ~h:size.b;
+		set_fill_color ctx ~color:(Color.rgba ~r:32 ~g:32 ~b:32 ~a:255);
 		fill ctx;
 
-        font_size ctx self#fontSize;
-		fill_color ctx (rgb 255 255 255);
-		text_align ctx Align.(left lor top);
-		text_box ctx 0. 0. size.a TSM.(to_string textState) null_char |> ignore;
+        Text.set_size ctx ~size:self#fontSize;
+        set_fill_color ctx ~color:Color.white;
+		Text.set_align ctx ~align:Align.(left lor top);
+		Text.text_box ctx ~x:0. ~y:0. ~break_width:size.a TSM.(to_string textState);
 end
 
 open Scrollpanel

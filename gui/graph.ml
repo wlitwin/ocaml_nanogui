@@ -1,15 +1,13 @@
 open! Widget
 
-module NV = Nanovg
-
 class graph parent = object
    inherit widget parent as super
 
    val mutable data : float array = [||]
    val mutable dataLen : float = 0.
-   val mutable bgColor : color = NV.rgba 20 20 20 128
-   val mutable fgColor : color = NV.rgba 255 192 0 128
-   val mutable textColor : color = NV.rgba 255 255 255 255
+   val mutable bgColor : color = Gv.Color.rgba ~r:20 ~g:20 ~b:20 ~a:128
+   val mutable fgColor : color = Gv.Color.rgba ~r:255 ~g:192 ~b:0 ~a:128
+   val mutable textColor : color = Gv.Color.rgba ~r:255 ~g:255 ~b:255 ~a:255
    val mutable header : string = ""
    val mutable footer : string = ""
    val mutable caption : string = ""
@@ -48,40 +46,40 @@ class graph parent = object
         super#draw ctx;
         
         if Array.length data >= 2 then (
-            let open NV in
-            begin_path ctx;
-            rect ctx 0. 0. size.a size.b;
-            fill_color ctx bgColor;
+            let open Gv in
+            Path.begin_ ctx;
+            Path.rect ctx ~x:0. ~y:0. ~w:size.a ~h:size.b;
+            set_fill_color ctx ~color:bgColor;
             fill ctx;
 
-            begin_path ctx;
-            move_to ctx 0. (0. +. size.b);
+            Path.begin_ ctx;
+            Path.move_to ctx ~x:0. ~y:(0. +. size.b);
             Array.iteri (fun idx value ->
                 let open Float in
                 let i_f = of_int idx in
                 let vx = i_f*size.a / (dataLen-1.) in
                 let vy = (1. - value) * size.b in
-                line_to ctx vx vy
+                Path.line_to ctx ~x:vx ~y:vy
             ) data;
 
-            line_to ctx size.a size.b;
-            stroke_color ctx (rgba 100 100 100 255);
+            Path.line_to ctx ~x:size.a ~y:size.b;
+            set_stroke_color ctx ~color:(Color.rgba ~r:100 ~g:100 ~b:100 ~a:255);
             stroke ctx;
             if fillUnderArea then (
-                fill_color ctx fgColor;
+                set_fill_color ctx ~color:fgColor;
                 fill ctx;
             ) else (
-                close_path ctx;
+                Path.close ctx;
             );
 
-            font_face ctx "mono";
+            Text.set_font_face ctx ~name:"mono";
 
             let render_text value size x y align =
                 if not String.(is_empty value) then (
-                    font_size ctx size;
-                    text_align ctx align;
-                    fill_color ctx textColor;
-                    text ctx x y value null_char |> ignore;
+                    Text.set_size ctx ~size;
+                    Text.set_align ctx ~align;
+                    set_fill_color ctx ~color:textColor;
+                    Text.text ctx ~x ~y value;
                 );
             in
 
@@ -89,9 +87,9 @@ class graph parent = object
             render_text header 18. (size.a -. 3.) 1. Align.(right lor top);
             render_text footer 15. (size.a -. 3.) (size.b +. 1.) Align.(right lor bottom);
 
-            begin_path ctx;
-            rect ctx 0. 0. size.a size.b;
-            stroke_color ctx (rgba 100 100 100 255);
+            Path.begin_ ctx;
+            Path.rect ctx ~x:0. ~y:0. ~w:size.a ~h:size.b;
+            set_stroke_color ctx ~color:(Color.rgba ~r:100 ~g:100 ~b:100 ~a:255);
             stroke ctx;
         )
 end

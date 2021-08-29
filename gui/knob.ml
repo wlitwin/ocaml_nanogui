@@ -24,30 +24,32 @@ class knob parent ~min ~max ~value = object(_self)
         Float.lerp minValue maxValue ~t
 
     method! draw ctx =
-        let open Nanovg in
+        let open Widget.Gv in
         let open Float in
 
         let center = Vec2.(size * 0.5) in
         let radius = (min size.a size.b) * 0.45 in
         let radius_min = radius - radius*0.3 in
 
-        let _bg = radial_gradient ctx center.a center.b 
-            radius_min radius (rgba 255 255 255 64) (rgba 16 16 16 64)
+        let _bg = Paint.radial_gradient ctx ~cx:center.a ~cy:center.b 
+            ~in_radius:radius_min ~out_radius:radius 
+            ~icol:(Color.rgba ~r:255 ~g:255 ~b:255 ~a:64) 
+            ~ocol:(Color.rgba ~r:16 ~g:16 ~b:16 ~a:64)
         in
 
         let make_arc start end_ =
-            begin_path ctx;
-            arc ctx center.a center.b radius_min start end_  Winding.cw;
-            arc ctx center.a center.b radius end_ start  Winding.ccw;
-            close_path ctx;
+            Path.begin_ ctx;
+            Path.arc ctx ~cx:center.a ~cy:center.b ~r:radius_min ~a0:start ~a1:end_  ~dir:Winding.CW;
+            Path.arc ctx ~cx:center.a ~cy:center.b ~r:radius ~a0:end_ ~a1:start  ~dir:Winding.CCW;
+            Path.close ctx;
         in
 
         (* Draw arc *)
         let start = 0.75*pi in
         let end_ = 2.25*pi in
-        fill_paint ctx _bg;
+        set_fill_paint ctx ~paint:_bg;
         make_arc start end_;
-        stroke_color ctx theme#borderDark;
+        set_stroke_color ctx ~color:theme#borderDark;
         stroke ctx;
         fill ctx;
 
@@ -57,7 +59,7 @@ class knob parent ~min ~max ~value = object(_self)
         (* Draw filled portion of arc *)
         if value > 0. then (
             make_arc start angle;
-            fill_color ctx (rgba 110 204 236 255);
+            set_fill_color ctx ~color:(Color.rgba ~r:110 ~g:204 ~b:236 ~a:255);
             fill ctx;
         );
 
@@ -75,17 +77,21 @@ class knob parent ~min ~max ~value = object(_self)
         let left = Vec2.(center - vright*width) in
         let top = Vec2.(center + vup*radius_min) in
         let bot = Vec2.(center - vup*width) in
-        let arrow_bg = linear_gradient ctx left.a left.b right.a right.b (rgba 16 16 16 255) (rgba 128 128 128 255) in
-        begin_path ctx;
-        stroke_width ctx 2.;
-        stroke_color ctx (rgba 128 128 128 255);
-        fill_paint ctx arrow_bg;
+        let arrow_bg = Paint.linear_gradient ctx 
+            ~sx:left.a ~sy:left.b ~ex:right.a ~ey:right.b 
+            ~icol:(Color.rgba ~r:16 ~g:16 ~b:16 ~a:255) 
+            ~ocol:(Color.rgba ~r:128 ~g:128 ~b:128 ~a:255) 
+        in
+        Path.begin_ ctx;
+        set_stroke_width ctx ~width:2.;
+        set_stroke_color ctx ~color:(Color.rgba ~r:128 ~g:128 ~b:128 ~a:255);
+        set_fill_paint ctx ~paint:arrow_bg;
         (*fill_color ctx (rgba 96 96 96 255);*)
-        move_to ctx top.a top.b;
-        line_to ctx right.a right.b;
-        line_to ctx bot.a bot.b;
-        line_to ctx left.a left.b;
-        close_path ctx;
+        Path.move_to ctx ~x:top.a ~y:top.b;
+        Path.line_to ctx ~x:right.a ~y:right.b;
+        Path.line_to ctx ~x:bot.a ~y:bot.b;
+        Path.line_to ctx ~x:left.a ~y:left.b;
+        Path.close ctx;
         stroke ctx;
         fill ctx;
 end

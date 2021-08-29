@@ -44,16 +44,12 @@ module PerfCounter = struct
     ;;
 end
 
-let is_black (color : Nanovg.color Ctypes.structure) =
-    let r = Ctypes.getf color Nanovg.Color.r in
-    let g = Ctypes.getf color Nanovg.Color.g in
-    let b = Ctypes.getf color Nanovg.Color.b in
-    let a = Ctypes.getf color Nanovg.Color.a in
-    Float.(r = 0. && g = 0. && b = 0. && a = 0.)
+let is_black (color : Gv.Color.t) =
+    Float.(color.r = 0. && color.g = 0. && color.b = 0. && color.a = 0.)
 ;;
 
-type nvg_context = Nanovg.context Ctypes.structure Ctypes.ptr
-type nvg_color = Nanovg.color Ctypes.structure
+type nvg_context = Gv.t
+type nvg_color = Gv.Color.t
 
 open! Screen 
 open Button 
@@ -350,15 +346,26 @@ let go() =
     let knob2 = new knob sparent ~min:0. ~max:100. ~value:75. in
     knob2#setId "knob 2";
 
-    let img = Nanovg.create_image screen1#nvgContext "./bin/turtle.png" 0 in
+    (*let img = Gv.Image.create screen1#nvgContext "./bin/turtle.png" 0 in*)
+    let img = Gv.Image.from_color screen1#nvgContext
+        ~width:1
+        ~height:1
+        ~data:[|Gv.Color.rgb ~r:255 ~g:255 ~b:0|]
+        ~flags:Gv.ImageFlags.no_flags
+        |> Stdlib.Option.get
+    in
     let imgview = new imageview sparent img in
     imgview#setId "imageview";
 
-    knob#setCallback (fun value -> 
+    let set_img_size value =
         let value = value /. 100. in
         let scale = 100. *. value +. 1. in
         imgview#setFixedSize Vec2.(mk1 scale);
-    );
+    in
+
+    knob#setCallback set_img_size;
+
+    set_img_size knob#value;
 
     let mtbox = new multilineTextbox sparent in
     mtbox#setId "multi-text-box";

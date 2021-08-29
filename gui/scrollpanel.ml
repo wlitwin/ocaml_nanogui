@@ -145,15 +145,15 @@ class scrollpanel parent = object(self)
             let has_overflow_x = childPreferredWidth > size.a && overflow_x in
             let has_overflow_y = childPreferredHeight > size.b && overflow_y in
 
-            let open Nanovg in
+            let open Gv in
             if child#visible then (
                 save ctx;
                 let sh = if has_overflow_x then size.b - scrollBarSize else size.b in
                 let sw = if has_overflow_y then size.a - scrollBarSize else size.a in
-                intersect_scissor ctx 0. 0. sw sh;
+                Gv.Scissor.intersect ctx ~x:0. ~y:0. ~w:sw ~h:sh;
                 
                 let cpos = child#position in
-                translate ctx cpos.a cpos.b;
+                Transform.translate ctx ~x:cpos.a ~y:cpos.b;
 
                 child#draw ctx;
                 restore ctx;
@@ -170,22 +170,27 @@ class scrollpanel parent = object(self)
                 let y = 4. in
                 let w = 8. in
                 let h = size.b - 8. - extra in
-                let paint = box_gradient ctx (x + 1.) (y + 1.) w h 3. 4.
-                    (rgba 0 0 0 32) (rgba 0 0 0 92)
+                let paint = Paint.box_gradient ctx 
+                    ~x:(x + 1.) ~y:(y + 1.) ~w ~h ~r:3. ~f:4.
+                    ~icol:(Color.rgba ~r:0 ~g:0 ~b:0 ~a:32) 
+                    ~ocol:(Color.rgba ~r:0 ~g:0 ~b:0 ~a:92)
                 in
-                begin_path ctx;
-                rounded_rect ctx x y w h 3.;
-                fill_paint ctx paint;
+                Path.begin_ ctx;
+                Path.rounded_rect ctx ~x ~y ~w ~h ~r:3.;
+                set_fill_paint ctx ~paint;
                 fill ctx;
 
                 let height = self#height in
                 let scrollh = height * (min 1. (height / childPreferredHeight)) in
-                let paint = box_gradient ctx (x - 1.) (y + (h - scrollh)*vscroll - 1.) w scrollh
-                    3. 4. (rgba 220 220 220 100) (rgba 128 128 128 100)
+                let paint = Paint.box_gradient ctx 
+                    ~x:(x - 1.) ~y:(y + (h - scrollh)*vscroll - 1.) ~w ~h:scrollh
+                    ~r:3. ~f:4. 
+                    ~icol:(Color.rgba ~r:220 ~g:220 ~b:220 ~a:100) 
+                    ~ocol:(Color.rgba ~r:128 ~g:128 ~b:128 ~a:100)
                 in
-                begin_path ctx;
-                rounded_rect ctx (x + 1.) (y + 1. + (h - scrollh)*vscroll) (w-2.) (scrollh - 2.) 2.;
-                fill_paint ctx paint;
+                Path.begin_ ctx;
+                Path.rounded_rect ctx ~x:(x + 1.) ~y:(y + 1. + (h - scrollh)*vscroll) ~w:(w-2.) ~h:(scrollh - 2.) ~r:2.;
+                set_fill_paint ctx ~paint;
                 fill ctx;
             );
 
@@ -194,22 +199,26 @@ class scrollpanel parent = object(self)
                 let y = size.b - scrollBarSize in
                 let w = size.a - 8. - extra in
                 let h = 8. in
-                let paint = box_gradient ctx (x + 1.) (y + 1.) w h 3. 4.
-                    (rgba 0 0 0 32) (rgba 0 0 0 92)
+                let paint = Paint.box_gradient ctx ~x:(x + 1.) ~y:(y + 1.) ~w ~h ~r:3. ~f:4.
+                    ~icol:(Color.rgba ~r:0 ~g:0 ~b:0 ~a:32) 
+                    ~ocol:(Color.rgba ~r:0 ~g:0 ~b:0 ~a:92)
                 in
-                begin_path ctx;
-                rounded_rect ctx x y w h 3.;
-                fill_paint ctx paint;
+                Path.begin_ ctx;
+                Path.rounded_rect ctx ~x ~y ~w ~h ~r:3.;
+                set_fill_paint ctx ~paint;
                 fill ctx;
 
                 let width = self#width in
                 let scrollv = width * (min 1. (width / childPreferredWidth)) in
-                let paint = box_gradient ctx (x + (w - scrollv)*hscroll - 1.) (y - 1.) scrollv h
-                    3. 4. (rgba 220 220 220 100) (rgba 128 128 128 100)
+                let paint = Paint.box_gradient ctx 
+                    ~x:(x + (w - scrollv)*hscroll - 1.) ~y:(y - 1.) ~w:scrollv ~h
+                    ~r:3. ~f:4. 
+                    ~icol:(Color.rgba ~r:220 ~g:220 ~b:220 ~a:100) 
+                    ~ocol:(Color.rgba ~r:128 ~g:128 ~b:128 ~a:100)
                 in
-                begin_path ctx;
-                rounded_rect ctx (x + 1. + (w - scrollv)*hscroll) (y+1.) (scrollv - 2.) (h-2.) 2.;
-                fill_paint ctx paint;
+                Path.begin_ ctx;
+                Path.rounded_rect ctx ~x:(x + 1. + (w - scrollv)*hscroll) ~y:(y+1.) ~w:(scrollv - 2.) ~h:(h-2.) ~r:2.;
+                set_fill_paint ctx ~paint;
                 fill ctx;
             )
         )

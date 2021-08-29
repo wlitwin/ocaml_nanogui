@@ -130,7 +130,7 @@ class colorwheel parent color = object(self)
        Vec2.mk1 100.
 
    method! draw vg =
-       let open Nanovg in
+       let open Gv in
        let open Float in
        super#draw vg;
 
@@ -150,48 +150,57 @@ class colorwheel parent color = object(self)
                 let i_f = of_int i in
                 let a0 = i_f / 6. * pi * 2. - aeps in
                 let a1 = (i_f+1.) / 6. * pi * 2. + aeps in
-                begin_path vg;
-                arc vg cx cy r0 a0 a1 Winding.cw;
-                arc vg cx cy r1 a1 a0 Winding.ccw;
-                close_path vg;
+                Path.begin_ vg;
+                Path.arc vg ~cx ~cy ~r:r0 ~a0 ~a1 ~dir:Winding.CW;
+                Path.arc vg ~cx ~cy ~r:r1 ~a0:a1 ~a1:a0 ~dir:Winding.CCW;
+                Path.close vg;
 
                 let ax = cx + cos a0 * (r0+r1)*0.5 in
                 let ay = cy + sin a0 * (r0+r1)*0.5 in
                 let bx = cx + cos a1 * (r0+r1)*0.5 in
                 let by = cy + sin a1 * (r0+r1)*0.5 in
-                let paint = linear_gradient vg ax ay bx by (hsla (a0/(2.*pi)) 1. 0.55 255)
-                                                           (hsla (a1/(2.*pi)) 1. 0.55 255) in
-                fill_paint vg paint;
+                let paint = Paint.linear_gradient vg ~sx:ax ~sy:ay ~ex:bx ~ey:by 
+                    ~icol:(Color.hsla ~h:(a0/(2.*pi)) ~s:1. ~l:0.55 ~a:255)
+                   ~ocol:(Color.hsla ~h:(a1/(2.*pi)) ~s:1. ~l:0.55 ~a:255) 
+                in
+                set_fill_paint vg ~paint;
                 fill vg;
             done;
 
-            begin_path vg;
-            circle vg cx cy (r0-0.5);
-            circle vg cx cy (r1+0.5);
-            stroke_color vg (rgba 0 0 0 64);
-            stroke_width vg 1.;
+            Path.begin_ vg;
+            Path.circle vg ~cx ~cy ~r:(r0-0.5);
+            Path.circle vg ~cx ~cy ~r:(r1+0.5);
+            set_stroke_color vg ~color:(Color.rgba ~r:0 ~g:0 ~b:0 ~a:64);
+            set_stroke_width vg ~width:1.;
             stroke vg;
 
             (* Selector *)
             save vg;
-            translate vg cx cy;
-            rotate vg (hue*2.*pi);
+            Transform.translate vg ~x:cx ~y:cy;
+            Transform.rotate vg ~angle:(hue*2.*pi);
 
             (* Marker on *)
             let u = max (r1/50.) 1.5 in
             let u = min u 4. in
-            stroke_width vg u;
-            begin_path vg;
-            rect vg (r0-1.) (~-2.*u) (r1-r0+2.) (4.*u);
-            stroke_color vg (rgba 255 255 255 192);
+            set_stroke_width vg ~width:u;
+            Path.begin_ vg;
+            Path.rect vg ~x:(r0-1.) ~y:(~-2.*u) ~w:(r1-r0+2.) ~h:(4.*u);
+            set_stroke_color vg ~color:(Color.rgba ~r:255 ~g:255 ~b:255 ~a:192);
             stroke vg;
 
-            let paint = box_gradient vg (r0-3.) ~-.5. (r1-r0+6.) 10. 2. 4. (rgba 0 0 0 128) (rgba 0 0 0 0) in
-            begin_path vg;
-            rect vg (r0-2.-10.) (~-.4.-10.) (r1-r0+4.+20.) (8.+20.);
-            rect vg (r0-2.) ~-.4. (r1-r0+4.) 8.;
-            path_winding vg Solidity.hole;
-            fill_paint vg paint;
+            let paint = Paint.box_gradient vg 
+                ~x:(r0-3.) 
+                ~y:~-.5. 
+                ~w:(r1-r0+6.) 
+                ~h:10. ~r:2. ~f:4. 
+                ~icol:(Color.rgba ~r:0 ~g:0 ~b:0 ~a:128) 
+                ~ocol:(Color.transparent)
+            in
+            Path.begin_ vg;
+            Path.rect vg ~x:(r0-2.-10.) ~y:(~-.4.-10.) ~w:(r1-r0+4.+20.) ~h:(8.+20.);
+            Path.rect vg ~x:(r0-2.) ~y:~-.4. ~w:(r1-r0+4.) ~h:8.;
+            Path.winding vg ~winding:Winding.CW; (* hole *)
+            set_fill_paint vg ~paint;
             fill vg;
 
             (* Center triangle *)
@@ -201,29 +210,35 @@ class colorwheel parent color = object(self)
             let ay = sin v * r in
             let bx = cos ~-.v * r in
             let by = sin ~-.v * r in
-            begin_path vg;
-            move_to vg r 0.;
-            line_to vg ax ay;
-            line_to vg bx by;
-            close_path vg;
+            Path.begin_ vg;
+            Path.move_to vg ~x:r ~y:0.;
+            Path.line_to vg ~x:ax ~y:ay;
+            Path.line_to vg ~x:bx ~y:by;
+            Path.close vg;
             
-            let paint = linear_gradient vg r 0. ax ay (hsla hue 1. 0.5 255) (rgba 255 255 255 255) in
-            fill_paint vg paint;
+            let paint = Paint.linear_gradient vg ~sx:r ~sy:0. ~ex:ax ~ey:ay 
+                ~icol:(Color.hsla ~h:hue ~s:1. ~l:0.5 ~a:255) 
+                ~ocol:(Color.white) 
+            in
+            set_fill_paint vg ~paint;
             fill vg;
 
-            let paint = linear_gradient vg ((r+ax)*0.5) ((0. + ay)*0.5) bx by (rgba 0 0 0 0) (rgba 0 0 0 255) in
-            fill_paint vg paint;
+            let paint = Paint.linear_gradient vg 
+                ~sx:((r+ax)*0.5) ~sy:((0. + ay)*0.5) ~ex:bx ~ey:by 
+                ~icol:Color.transparent ~ocol:Color.black
+            in
+            set_fill_paint vg ~paint;
             fill vg;
-            stroke_color vg (rgba 0 0 0 64);
+            set_stroke_color vg ~color:Color.(rgba ~r:0 ~g:0 ~b:0 ~a:64);
             stroke vg;
 
             (* Select circle on triangle *)
             let sx = r*(1. - white - black) + ax*white + bx*black in
             let sy = ax*white + by*black in
-            stroke_width vg u;
-            begin_path vg;
-            circle vg sx sy (2.*u);
-            stroke_color vg (rgba 255 255 255 192);
+            set_stroke_width vg ~width:u;
+            Path.begin_ vg;
+            Path.circle vg ~cx:sx ~cy:sy ~r:(2.*u);
+            set_stroke_color vg ~color:(Color.rgba ~r:255 ~g:255 ~b:255 ~a:192);
             stroke vg;
             restore vg;
             restore vg;

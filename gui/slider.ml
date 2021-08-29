@@ -54,13 +54,13 @@ class slider parent ~min ~max ~value = object(self)
         ) else false
 
     method! draw ctx =
-        let open Nanovg in
+        let open Gv in
         let open Float in
         let center = Vec2.(size * 0.5) in
 
-        begin_path ctx;
-        fill_color ctx (rgba 96 96 96 255);
-        rect ctx 0. 0. size.a size.b;
+        Path.begin_ ctx;
+        set_fill_color ctx ~color:(Color.rgba ~r:96 ~g:96 ~b:96 ~a:255);
+        Path.rect ctx ~x:0. ~y:0. ~w:size.a ~h:size.b;
         fill ctx;
 
         let rect_y = center.b - size.b*0.25 in
@@ -75,47 +75,48 @@ class slider parent ~min ~max ~value = object(self)
             center.b
         in
 
-        let bg = box_gradient ctx start_x rect_y width_x rect_h 3. 3. 
-            (if enabled then (rgba 0 0 0 32) else (rgba 0 0 0 10))
-            (if enabled then (rgba 0 0 0 128) else (rgba 0 0 0 210))
+        let bg = Paint.box_gradient ctx ~x:start_x ~y:rect_y ~w:width_x ~h:rect_h ~r:3. ~f:3. 
+            ~icol:(if enabled then (Color.rgba ~r:0 ~g:0 ~b:0 ~a:32) else (Color.rgba ~r:0 ~g:0 ~b:0 ~a:10))
+            ~ocol:(if enabled then (Color.rgba ~r:0 ~g:0 ~b:0 ~a:128) else (Color.rgba ~r:0 ~g:0 ~b:0 ~a:210))
         in
 
-        begin_path ctx;
-        rounded_rect ctx start_x rect_y width_x rect_h 2.;
-        fill_paint ctx bg;
+        Path.begin_ ctx;
+        Path.rounded_rect ctx ~x:start_x ~y:rect_y ~w:width_x ~h:rect_h ~r:2.;
+        set_fill_paint ctx ~paint:bg;
         fill ctx;
 
-        let knob_shadow = radial_gradient ctx knob_pos.a knob_pos.b 
-            (kr-kshadow) (kr+kshadow) (rgba 0 0 0 64) theme#transparent
+        let knob_shadow = Paint.radial_gradient ctx ~cx:knob_pos.a ~cy:knob_pos.b 
+            ~in_radius:(kr-kshadow) ~out_radius:(kr+kshadow) 
+            ~icol:(Color.rgba ~r:0 ~g:0 ~b:0 ~a:64) ~ocol:theme#transparent
         in
 
-        begin_path ctx;
-        rect ctx (knob_pos.a - kr - 5.) (knob_pos.b - kr - 5.) 
-                 (kr * 2. + 10.) (kr * 2. + 10. + kshadow);
-        circle ctx knob_pos.a knob_pos.b kr;
-        path_winding ctx Solidity.hole;
-        fill_paint ctx knob_shadow;
+        Path.begin_ ctx;
+        Path.rect ctx ~x:(knob_pos.a - kr - 5.) ~y:(knob_pos.b - kr - 5.) 
+                 ~w:(kr * 2. + 10.) ~h:(kr * 2. + 10. + kshadow);
+        Path.circle ctx ~cx:knob_pos.a ~cy:knob_pos.b ~r:kr;
+        Path.winding ctx ~winding:Winding.CW;
+        set_fill_paint ctx ~paint:knob_shadow;
         fill ctx;
 
-        let knob = linear_gradient ctx 0. (center.b - kr) 0. (center.b + kr)
-                    theme#borderLight theme#borderMedium
+        let knob = Paint.linear_gradient ctx ~sx:0. ~sy:(center.b - kr) ~ex:0. ~ey:(center.b + kr)
+                    ~icol:theme#borderLight ~ocol:theme#borderMedium
         in
 
-        let knob_reverse = linear_gradient ctx 0. (center.b - kr) 0. (center.b + kr)
-                    theme#borderMedium theme#borderLight
+        let knob_reverse = Paint.linear_gradient ctx ~sx:0. ~sy:(center.b - kr) ~ex:0. ~ey:(center.b + kr)
+                    ~icol:theme#borderMedium ~ocol:theme#borderLight
         in
 
-        begin_path ctx;
-        circle ctx knob_pos.a knob_pos.b kr;
-        stroke_color ctx theme#borderDark;
-        fill_paint ctx knob;
+        Path.begin_ ctx;
+        Path.circle ctx ~cx:knob_pos.a ~cy:knob_pos.b ~r:kr;
+        set_stroke_color ctx ~color:theme#borderDark;
+        set_fill_paint ctx ~paint:knob;
         stroke ctx;
         fill ctx;
 
-        begin_path ctx;
-        circle ctx knob_pos.a knob_pos.b (kr*0.5);
-        fill_color ctx (rgba 150 150 150 (if enabled then 255 else 100));
-        stroke_paint ctx knob_reverse;
+        Path.begin_ ctx;
+        Path.circle ctx ~cx:knob_pos.a ~cy:knob_pos.b ~r:(kr*0.5);
+        set_fill_color ctx ~color:(Color.rgba ~r:150 ~g:150 ~b:150 ~a:(if enabled then 255 else 100));
+        set_stroke_paint ctx ~paint:knob_reverse;
         stroke ctx;
         fill ctx;
 end
