@@ -1,4 +1,4 @@
-[@@@landmark "auto"]
+module Gv = Graphv_gles2_native
 
 module Event : sig
     type phase = Down
@@ -123,20 +123,8 @@ let split_bounds bounds : float * float * float * float =
     minx, miny, maxx, maxy
 ;;
 
-module ColorHelper = struct
-    type t = Nanovg.color Ctypes.structure
-
-    let r t = Ctypes.getf t Nanovg.Color.r
-    let g t = Ctypes.getf t Nanovg.Color.g
-    let b t = Ctypes.getf t Nanovg.Color.b
-    let a t = Ctypes.getf t Nanovg.Color.a
-
-    let rgbf t a =
-        Nanovg.(rgbaf (r t) (g t) (b t) a)
-end
-
-type graphics_context = Nanovg.context Ctypes.structure Ctypes.ptr
-type color = Nanovg.color Ctypes.structure
+type graphics_context = Gv.t
+type color = Gv.Color.t
 
 type layoutable = <
     fixedSize : Vec2.t option;
@@ -193,7 +181,8 @@ let to_utf8 (c : int) =
 
 let phys_equal = ( == )
 
-open Nanovg
+let rgba r g b a = 
+    Gv.Color.rgba ~r ~g ~b ~a
 
 class theme = 
 object(self)
@@ -733,7 +722,7 @@ class widget parent = object(self)
             ) children
 
     method draw (nvg : graphics_context) =
-        let open Nanovg in
+        let open Gv in
         (*
         stroke_width nvg 1.;
         begin_path nvg;
@@ -752,7 +741,7 @@ class widget parent = object(self)
                     save nvg;
                     let cpos : Vec2.t = child#position in
                     let csize : Vec2.t = child#size in
-                    intersect_scissor nvg cpos.a cpos.b csize.a csize.b;
+                    Gv.Scissor.intersect nvg ~x:cpos.a ~y:cpos.b ~w:csize.a ~h:csize.b;
 
                     (*
                     begin_path nvg;
@@ -761,7 +750,7 @@ class widget parent = object(self)
                     stroke nvg;
                     *)
                     
-                    translate nvg cpos.a cpos.b;
+                    Gv.Transform.translate nvg ~x:cpos.a ~y:cpos.b;
                     child#draw nvg;
                     restore nvg;
                 )

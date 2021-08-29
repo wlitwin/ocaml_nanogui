@@ -1,4 +1,4 @@
-(lang dune 2.7)
+(lang dune 2.8)
 (wrapped_executables true)
 (generate_opam_files true)
 (name ocaml_nanogui)

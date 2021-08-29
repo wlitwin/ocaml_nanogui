@@ -11,10 +11,10 @@
     ocaml_nanogui_libext
     ppx_blob
     rope
-    tgls
     tgls.tgles2
     glfw-ocaml
-    nanovg
+    graphv_gles2_native
+   ; nanovg
  )
  (inline_tests)
  (preprocess

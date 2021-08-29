@@ -3,7 +3,7 @@ opam-version: "2.0"
 synopsis: "A small UI framework using OpenGL written in OCaml"
 description: "A small UI framework using OpenGL written in OCaml"
 depends: [
-  "dune" {>= "2.7"}
+  "dune" {>= "2.8"}
   "odoc" {with-doc}
 ]
 build: [
