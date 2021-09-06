@@ -31,10 +31,10 @@ class knob parent ~min ~max ~value = object(_self)
         let radius = (min size.a size.b) * 0.45 in
         let radius_min = radius - radius*0.3 in
 
-        let _bg = Paint.radial_gradient ctx ~cx:center.a ~cy:center.b 
+        let bg = Paint.radial_gradient ctx ~cx:center.a ~cy:center.b 
             ~in_radius:radius_min ~out_radius:radius 
-            ~icol:(Color.rgba ~r:255 ~g:255 ~b:255 ~a:64) 
-            ~ocol:(Color.rgba ~r:16 ~g:16 ~b:16 ~a:64)
+            ~icol:(Color.rgba ~r:0 ~g:0 ~b:0 ~a:32) 
+            ~ocol:(Color.rgba ~r:0 ~g:0 ~b:0 ~a:32)
         in
 
         let make_arc start end_ =
@@ -47,7 +47,7 @@ class knob parent ~min ~max ~value = object(_self)
         (* Draw arc *)
         let start = 0.75*pi in
         let end_ = 2.25*pi in
-        set_fill_paint ctx ~paint:_bg;
+        set_fill_paint ctx ~paint:bg;
         make_arc start end_;
         set_stroke_color ctx ~color:theme#borderDark;
         stroke ctx;
@@ -59,7 +59,7 @@ class knob parent ~min ~max ~value = object(_self)
         (* Draw filled portion of arc *)
         if value > 0. then (
             make_arc start angle;
-            set_fill_color ctx ~color:(Color.rgba ~r:110 ~g:204 ~b:236 ~a:255);
+            set_fill_color ctx ~color:(Color.rgba ~r:220 ~g:220 ~b:220 ~a:100);
             fill ctx;
         );
 

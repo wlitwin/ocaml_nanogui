@@ -276,34 +276,33 @@ class screen initial_size nvg_context glfw_window = object(self)
                 Text.set_line_height nvg ~height:1.1;
                 let open Float in
                 let pos = Vec2.(widget#absolutePosition + mk (widget#width*.0.5) (widget#height+.10.)) in
-                let b = Text.bounds nvg ~x:pos.a ~y:pos.b tooltip in
-                let h = 
-                    (* h ? uses x values *)
-                    let h = (b.box.xmax - b.box.xmin)*0.5 in
-                    if Float.(h > tooltip_width*0.5) then (
+                let b = (Text.bounds nvg ~x:pos.a ~y:pos.b tooltip).box in
+                let b, h_off =
+                    let h_off = (b.xmax - b.xmin)*0.5 in
+                    if Float.(h_off > tooltip_width*0.5) then (
                         Text.set_align nvg ~align:Align.(left lor top);
                         let b = Text.box_bounds nvg ~x:pos.a ~y:pos.b ~break_width:tooltip_width tooltip in
-                        (b.xmax - b.xmin)*0.5
-                    ) else h
+                        b, (b.xmax - b.xmin)*0.5
+                    ) else b, h_off
                 in
                 Global.set_alpha nvg ~alpha:Float.((min 1. (2.*(elapsed-0.4)))*0.8);
                 Path.begin_ nvg;
                 set_fill_color nvg ~color:Color.black;
                 Path.rounded_rect nvg 
-                    ~x:(b.box.xmin - 4. - h)
-                    ~y:(b.box.ymin - 4.)
-                    ~w:(b.box.xmax - b.box.xmin + 8.)
-                    ~h:(b.box.ymax - b.box.ymin + 8.)
+                    ~x:(b.xmin - 4. - h_off)
+                    ~y:(b.ymin - 4.)
+                    ~w:(b.xmax - b.xmin + 8.)
+                    ~h:(b.ymax - b.ymin + 8.)
                     ~r:3.;
                 let px = pos.a in
-                Path.move_to nvg ~x:px ~y:(b.box.ymin - 10.);
-                Path.line_to nvg ~x:(px + 7.) ~y:(b.box.ymin + 1.);
-                Path.line_to nvg ~x:(px - 7.) ~y:(b.box.ymin + 1.);
+                Path.move_to nvg ~x:px ~y:(b.ymin - 10.);
+                Path.line_to nvg ~x:(px + 7.) ~y:(b.ymin + 1.);
+                Path.line_to nvg ~x:(px - 7.) ~y:(b.ymin + 1.);
                 fill nvg;
 
                 set_fill_color nvg ~color:Color.white;
                 Text.set_blur nvg ~blur:0.;
-                Text.text_box nvg ~x:(pos.a-h) ~y:pos.b ~break_width:tooltip_width tooltip;
+                Text.text_box nvg ~x:(pos.a-h_off) ~y:pos.b ~break_width:tooltip_width tooltip;
             ) |> ignore;
 
             Gv.end_frame nvgContext;
