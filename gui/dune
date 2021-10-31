@@ -18,5 +18,5 @@
  )
  (inline_tests)
  (preprocess
-  (pps ppx_jane -allow-unannotated-ignores ppx_expect ppx_blob)))
+  (pps ppx_jane -allow-unannotated-ignores ppx_expect ppx_blob ppx_optcomp)))
 

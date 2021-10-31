@@ -381,7 +381,7 @@ let go() =
         ;
 
         lift layout_lbl
-        |> tr_pref_size (rightOf vscroll2 0.) (bottomOf vscroll2 pad)
+        |> tr_size (rightOf vscroll2 0.) (bottomOf vscroll2 pad) (const 175.) (const 24.)
         ;
 
         lift btn_container
