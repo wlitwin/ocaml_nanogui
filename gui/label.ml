@@ -4,12 +4,15 @@ class label parent text font_size = object(self)
     inherit widget parent as super
 
     val mutable text : string = text
+    val mutable multiline : bool = false
     val mutable color : color = Gv.Color.rgb ~r:200 ~g:200 ~b:200
 
     method color = color
     method setColor c = color <- c
+    method mutliline = multiline
 
     method text = text
+    method setMultiline m = multiline <- m
     method setText t = 
         if String.length t <> String.length text then (
             self#markLayoutDirty;
@@ -40,11 +43,16 @@ class label parent text font_size = object(self)
         Gv.Text.set_font_face ctx ~name:"mono";
         Gv.Text.set_size ctx ~size:self#fontSize;
         Gv.set_fill_color ctx ~color;
-        match self#fixedSize with
-        | Some fs ->
+        if multiline then (
             Gv.Text.set_align ctx ~align:Gv.Align.(left lor top);
-            Gv.Text.text_box ctx ~x:0. ~y:(fs.b*.0.5) ~break_width:fs.a text;
-        | None ->
-            Gv.Text.set_align ctx ~align:Gv.Align.(left lor middle);
-            Gv.Text.text ctx ~x:0. ~y:(size.b*.0.5) text;
+            Gv.Text.text_box ctx ~x:0. ~y:0. ~break_width:self#size.a text;
+        ) else (
+            match self#fixedSize with
+            | Some fs ->
+                Gv.Text.set_align ctx ~align:Gv.Align.(left lor top);
+                Gv.Text.text_box ctx ~x:0. ~y:0. ~break_width:fs.a text;
+            | None ->
+                Gv.Text.set_align ctx ~align:Gv.Align.(left lor middle);
+                Gv.Text.text ctx ~x:0. ~y:(size.b*.0.5) text;
+        )
 end

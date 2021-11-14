@@ -1,4 +1,4 @@
-module Gv = Graphv_gles2_native
+module Gv = Graphv_gles3_native
 
 module Event : sig
     type phase = Down

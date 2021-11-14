@@ -13,37 +13,6 @@ module GLFWExtras = struct
   ;;
 end
 
-module PerfCounter = struct
-    type t = {
-        mutable last_events : int;
-        mutable events : int;
-        mutable last_report_time : float;
-        report_fn : events:int -> avg:float -> unit;
-        report_sec : float;
-    }
-
-    let create ~report_fn ~report_sec = {
-        last_events = 0;
-        events = 0;
-        last_report_time = GLFW.getTime();
-        report_fn;
-        report_sec;
-    }
-
-    let mark_event t =
-        t.events <- t.events + 1;
-        let time = GLFW.getTime() in
-        let diff = time -. t.last_report_time in
-        if Float.(time -. t.last_report_time >= 1.) then (
-            t.last_events <- t.events;
-            let avg_time = diff /. Float.of_int t.events *. 1000. in
-            t.report_fn ~events:t.events ~avg:avg_time;
-            t.events <- 0;
-            t.last_report_time <- time;
-        )
-    ;;
-end
-
 let is_black (color : Gv.Color.t) =
     Float.(color.r = 0. && color.g = 0. && color.b = 0. && color.a = 0.)
 ;;
@@ -176,7 +145,7 @@ let go() =
         mono_font = "./gui/UbuntuMono-Regular.ttf";
         icon_font = "./gui/entypo.ttf";
     } in
-    let screen1 = Application.create_screen app ~title:"NanoGUI" ~width:400 ~height:400 in
+    let screen1 = Application.create_screen app ~title:"NanoGUI" ~width:800 ~height:600 in
     screen1#setId "screen1";
 
     let sparent = Some (screen1 :> widget) in
@@ -370,6 +339,8 @@ let go() =
     let mtbox = new multilineTextbox sparent in
     mtbox#setId "multi-text-box";
 
+    let long_text = new label sparent Text.long_text 18. in
+
     let pad = 10. in
     let deps = Build.[
         lift fps_lbl
@@ -440,6 +411,9 @@ let go() =
         lift mtbox
         |> tl_size (rightOf knob 0.) (bottomOf knob pad) (const 100.) (const 200.)
         ;
+
+        lift long_text
+        |> tl_size (rightOf mtbox pad) (topOf mtbox 0.) (const 400.) (const 400.)
     ] in
 
     screen1#setLayout (new constraintLayout deps);

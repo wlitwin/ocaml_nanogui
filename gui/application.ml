@@ -17,7 +17,7 @@ module GLFWExtras = struct
   ;;
 end
 
-module Gv = Graphv_gles2_native
+module Gv = Graphv_gles3_native
 
 let init resources =
     let errorcb error desc =
@@ -28,8 +28,8 @@ let init resources =
     at_exit GLFW.terminate;
     let _res = GLFWExtras.glfwSetErrorCallback errorcb in
     GLFW.windowHint ~hint:GLFW.ClientApi ~value:GLFW.OpenGLESApi;
-    GLFW.windowHint ~hint:GLFW.ContextVersionMajor ~value:2;
-    GLFW.windowHint ~hint:GLFW.ContextVersionMinor ~value:0;
+    GLFW.windowHint ~hint:GLFW.ContextVersionMajor ~value:3;
+    GLFW.windowHint ~hint:GLFW.ContextVersionMinor ~value:2;
     {resources}
 ;;
 
@@ -43,7 +43,7 @@ let create_screen ?(swap_interval=1) ~title ~width ~height {resources=_} =
     (* Create nanoVG *)
     let nvg =
         let open Gv.CreateFlags in
-        Gv.create ~flags:(antialias lor stencil_strokes lor debug) ()
+        Gv.create ~flags:(antialias lor stencil_strokes lor tesselate_afd) ()
     in
 
     (*

@@ -1,5 +1,5 @@
 (executable
-  (name shell)
+  (name main)
   (libraries
     core_kernel
     ocaml_nanogui.async))

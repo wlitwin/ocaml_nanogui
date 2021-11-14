@@ -89,7 +89,7 @@ class scrollpanel parent = object(self)
         hscroll <- (max 0. (min 1. (hscroll - rel.a / (width - offset_w - scrollv))));
         if not overflow_x || childPreferredWidth <= width then (hscroll <- 0.);
         if not overflow_y || childPreferredHeight <= height then (vscroll <- 0.);
-        updateLayout <- true;
+        (*updateLayout <- true;*)
         if V.length children != 0 then (
             let child = V.get children 0 in
             let scroll_v = ~-.vscroll*(childPreferredHeight + offset_h - height) in
