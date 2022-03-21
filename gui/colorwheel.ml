@@ -302,7 +302,7 @@ class colorwheel parent color = object(self)
         Region.is_none (self#adjustPosition pos dragRegion) |> not
 
     method! mouseButtonEvent ~pos button down _mods =
-        if not enabled || button <> GLFW.mouse_button_left then (
+        if not enabled || button <> Mouse.button_left then (
             false
         ) else if down then (
             dragRegion <- self#adjustPosition pos Region.both;

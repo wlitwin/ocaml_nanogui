@@ -75,7 +75,7 @@ class button parent caption icon = object(self)
         Vec2.{a = tw+.iw+.20.; b = fontsize +. 10.}
 
     method! mouseButtonEvent ~pos button down _mods =
-        if (button = GLFW.mouse_button_left) && enabled then (
+        if (button = Mouse.button_left) && enabled then (
             if down then (
                 pushed <- true
             ) else if pushed then (

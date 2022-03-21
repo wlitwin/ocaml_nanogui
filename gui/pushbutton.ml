@@ -14,7 +14,7 @@ class pushbutton parent caption = object(self)
 
     method! mouseButtonEvent ~pos button down _mods =
         let push_backup = pushed in
-        if (button = GLFW.mouse_button_left) && enabled then (
+        if (button = Mouse.button_left) && enabled then (
             if down then (
                 pushed <- not pushed;
             ) else if pushed then (

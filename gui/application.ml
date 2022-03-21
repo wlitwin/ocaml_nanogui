@@ -99,7 +99,7 @@ let create_screen ?(swap_interval=1) ~title ~width ~height {resources=_} =
 
 let last_render_time = ref 0.
 
-let run ?(idle=fun () -> ()) screens =
+let run ?(idle=fun () -> ()) _t screens =
     (* One pass, do initial layout *)
     List.iter (fun sc ->
         sc#performLayoutEntry;

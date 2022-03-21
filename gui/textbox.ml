@@ -82,7 +82,7 @@ class textbox parent in_value = object(self)
     val mutable mousePos : Vec2.t = Vec2.mk1 ~-.1.
     val mutable mouseDownPos : Vec2.t = Vec2.mk1 ~-.1.
     val mutable mouseDragPos : Vec2.t = Vec2.mk1 ~-.1.
-    val mutable mouseDownModifier : GLFW.key_mod list = []
+    val mutable mouseDownModifier : Key.modifier list = []
     val mutable textOffset : float = 0.
     val mutable lastClick : float = 0.
     val mutable callback : string -> bool = (fun _ -> false)
@@ -91,9 +91,9 @@ class textbox parent in_value = object(self)
         editable <- e;
         (*
         let cursor = 
-            GLFW.createStandardCursor ~shape:(
-                if editable then GLFW.IBeamCursor
-                else GLFW.ArrowCursor
+            Cursor.createStandardCursor ~shape:(
+                if editable then Cursor.IBeamCursor
+                else Cursor.ArrowCursor
             )
         in
         self#setCursor cursor
@@ -116,11 +116,11 @@ class textbox parent in_value = object(self)
         match self#screen with
         | None -> ()
         | Some screen ->
-            let str = GLFW.getClipboardString ~window:screen#glfwWindow in
+            let str = Clipboard.get_string ~window:screen#glfwWindow in
             valueTemp <- insert_at valueTemp cursorPos str
 
     method! mouseButtonEvent ~pos button down mods = 
-        if button = GLFW.mouse_button_left && down && not focused then (
+        if button = Mouse.button_left && down && not focused then (
             self#requestFocus
         );
 
@@ -129,7 +129,7 @@ class textbox parent in_value = object(self)
                 mouseDownPos <- pos;
                 mouseDownModifier <- mods;
 
-                let time = GLFW.getTime() in
+                let time = Time.now() in
                 if (time -. lastClick < 0.25) then (
                     (* Double click - select all text *)
                     selectionPos <- 0;
@@ -149,11 +149,11 @@ class textbox parent in_value = object(self)
         mousePos <- pos;
         (*
         if editable then (
-            self#setCursor GLFW.(createStandardCursor ~shape:ArrowCursor);
+            self#setCursor Cursor.(createStandardCursor ~shape:ArrowCursor);
         ) else if spinnable && not focused && Poly.(self#spinArea mousePos <> None) then (
-            self#setCursor GLFW.(createStandardCursor ~shape:HandCursor);
+            self#setCursor Cursor.(createStandardCursor ~shape:HandCursor);
         ) else (
-            self#setCursor GLFW.(createStandardCursor ~shape:IBeamCursor);
+            self#setCursor Cursor.(createStandardCursor ~shape:IBeamCursor);
         );
         *)
 
@@ -200,7 +200,7 @@ class textbox parent in_value = object(self)
                         cursorPos, selectionPos
                 in
 
-                GLFW.setClipboardString 
+                Clipboard.set_string
                     ~window:screen#glfwWindow 
                     ~string:String.(sub valueTemp ~pos:start ~len:(end_ - start));
             true
@@ -234,8 +234,8 @@ class textbox parent in_value = object(self)
         ) else false
 
     method! keyboardEvent ~key ~scancode:_ ~action mods =
-        let shift_down = has_mod mods GLFW.Shift in
-        let ctrl_down = has_mod mods GLFW.Control in
+        let shift_down = has_mod mods Key.Shift in
+        let ctrl_down = has_mod mods Key.Control in
         let reset_selection () =
             if shift_down then (
                 if selectionPos = -1 then
@@ -245,9 +245,9 @@ class textbox parent in_value = object(self)
             )
         in
         if editable && focused then (
-            if (action = GLFW.Press || action = GLFW.Repeat) then (
+            if (action = Key.Press || action = Key.Repeat) then (
                 begin match key with
-                | GLFW.Left ->
+                | Key.Left ->
                     reset_selection();
                     if cursorPos > 0 then
                         cursorPos <- cursorPos - 1
@@ -324,7 +324,7 @@ class textbox parent in_value = object(self)
 
     method updateCursor offset lastx (glyphs : Gv.Text.glyph_position array) size =
         if (mouseDownPos.a <> ~-.1.) then (
-            if has_mod mouseDownModifier GLFW.Shift then (
+            if has_mod mouseDownModifier Key.Shift then (
                 if selectionPos = ~-1 then (
                     selectionPos <- cursorPos
                 );

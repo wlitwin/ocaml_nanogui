@@ -24,7 +24,7 @@ class checkbox parent caption = object(self)
     method setChangeCallback c = callback <- c
 
     method! mouseButtonEvent ~pos button down _mods =
-        if enabled && (button = GLFW.mouse_button_left) then (
+        if enabled && (button = Mouse.button_left) then (
             if down then (
                 pushed <- true;
             ) else if pushed then (

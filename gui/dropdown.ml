@@ -61,7 +61,7 @@ class dropdown parent = object(self)
         popup#performLayout ctx
 
     method! mouseButtonEvent ~pos:_ button down _mods =
-        if button = GLFW.mouse_button_left && enabled then (
+        if button = Mouse.button_left && enabled then (
             if down then (
                 if not pushed then (
                     self#requestFocus;

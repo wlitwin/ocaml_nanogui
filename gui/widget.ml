@@ -1,5 +1,11 @@
 module Gv = Graphv_gles3
 
+module Key = Backend.Key
+module Mouse = Backend.Mouse
+module Cursor = Backend.Cursor
+module Time = Backend.Time
+module Clipboard = Backend.Clipboard
+
 module Event : sig
     type phase = Down
                | Up
@@ -103,7 +109,7 @@ end = struct
         loop t.handlers       
 end
 
-type modifiers = GLFW.key_mod list
+type modifiers = Key.modifier list
 type ui_event = ..
 type ui_event += MouseButton of { pos:Vec2.t; button:int; down:bool; mods:modifiers }
                | MouseMotion of { pos:Vec2.t; rel:Vec2.t; button:int; mods:modifiers }
@@ -111,7 +117,7 @@ type ui_event += MouseButton of { pos:Vec2.t; button:int; down:bool; mods:modifi
                | MouseDrag of { pos:Vec2.t; rel:Vec2.t; button:int; mods:modifiers }
                | ScrollEvent of {pos:Vec2.t; rel:Vec2.t}
                | Focus of bool
-               | KeyboardKey of { key:GLFW.key; scancode:int; action:GLFW.key_action; mods:modifiers }
+               | KeyboardKey of { key:Key.key; scancode:int; action:Key.action; mods:modifiers }
                | KeyboardChar of int
                | FileDrop of string list (* filenames *)
 let split_bounds bounds : float * float * float * float =
@@ -264,7 +270,7 @@ and screen_spec = <
     pixelRatio : float;
     size : Vec2.t;
     updateFocus : widget_spec option -> unit; 
-    glfwWindow : GLFW.window;
+    glfwWindow : Backend.Window.t;
     addChild : int -> widget_spec -> unit;
     addChildWidget : widget_spec -> unit; 
     setLayoutDirty : unit;
@@ -287,7 +293,7 @@ and widget_spec = <
     childCount : int; childIndex : widget_spec -> int option; 
     children : widget_spec V.vector; 
     contains : Vec2.t -> bool;
-    cursor : GLFW.cursor option; 
+    cursor : Cursor.t option; 
     draw : graphics_context -> unit; 
     enabled : bool; 
     fixedHeight : float;
@@ -309,7 +315,7 @@ and widget_spec = <
     removeChildWidget : widget_spec -> unit; 
     requestFocus : unit;
     screen : screen_spec option;
-    setCursor : GLFW.cursor -> unit; 
+    setCursor : Cursor.t -> unit; 
     setEnabled : bool -> unit;
     setFixedSize : Vec2.t -> unit; 
     setFocused : bool -> unit;
@@ -481,7 +487,7 @@ class widget parent = object(self)
     val mutable tooltip : string option = None
     val mutable fontSize : float option = None
     val mutable iconExtraScale : float = 1.0
-    val mutable cursor : GLFW.cursor option = None
+    val mutable cursor : Cursor.t option = None
     val mutable mouseFocus : bool = false
     val mutable userHandler : handlers = Handlers.create()
 
@@ -688,7 +694,7 @@ class widget parent = object(self)
         ignore(focus);
         false
 
-    method private keyboardEvent ~(key: GLFW.key) ~(scancode:int) ~(action:GLFW.key_action) (modifiers : GLFW.key_mod list) =
+    method private keyboardEvent ~(key: Key.key) ~(scancode:int) ~(action:Key.action) (modifiers : Key.modifier list) =
         ignore(key);
         ignore(scancode);
         ignore(action);
@@ -792,7 +798,7 @@ class widget parent = object(self)
             begin match self#mouseButtonEvent ~pos:(self#toLocal pos) button down mods with
             | true -> Event.stop event
             | false ->
-                if (button = GLFW.mouse_button_left) && down && not focused then (
+                if (button = Mouse.button_left) && down && not focused then (
                     self#requestFocus
                 );
             end

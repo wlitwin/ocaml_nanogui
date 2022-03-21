@@ -95,7 +95,7 @@ class window parent title = object(self)
 
 
     method! mouseDragEvent ~pos:_ ~rel button _mods =
-        if drag && (button = GLFW.mouse_button_left) then (
+        if drag && (button = Mouse.button_left) then (
             let parent_size = match parent with
                             | None -> Vec2.zero
                             | Some p -> p#size
@@ -110,7 +110,7 @@ class window parent title = object(self)
     method! mouseButtonEvent ~pos button down mods =
         if super#mouseButtonEvent ~pos button down mods then (
             true
-        ) else if (button = GLFW.mouse_button_left) then (
+        ) else if (button = Mouse.button_left) then (
             drag <- down && ((pos.b -. position.b) < theme#windowHeaderHeight);
             true
         ) else false

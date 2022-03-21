@@ -1,7 +1,5 @@
-[@@@landmark "auto"]
-
 open Widget
-open Tgles2
+open Backend
 
 class screen initial_size nvg_context glfw_window = object(self)
     inherit widget None as super
@@ -13,7 +11,7 @@ class screen initial_size nvg_context glfw_window = object(self)
     val mutable nvgContext : graphics_context = nvg_context
     val mutable pixelRatio : float = 1.
     val mutable mouseState : int = 0
-    val mutable modifiers : GLFW.key_mod list = []
+    val mutable modifiers : Key.modifier list = []
     val mutable fbSize : Vec2.t = Vec2.zero
     val mutable dragActive : bool = false
     val mutable dragWidget : widget option = None
@@ -23,11 +21,11 @@ class screen initial_size nvg_context glfw_window = object(self)
     val mutable popups : widget list = []
     val mutable lastLayoutTime : float = 0.
     val mutable layoutDirty : bool = true
-    val window : GLFW.window = glfw_window
+    val window : Window.t = glfw_window
 
     initializer
         size <- initial_size;
-        lastInteraction <- GLFW.getTime();
+        lastInteraction <- Time.now();
 
     method lastLayoutTime = lastLayoutTime
 
@@ -38,11 +36,11 @@ class screen initial_size nvg_context glfw_window = object(self)
     method caption = caption
     method setCaption c = 
         caption <- c;
-        GLFW.setWindowTitle ~window ~title:caption
+        Window.set_title ~window ~title:caption
 
     method! setSize size =
         super#setSize size;
-        GLFW.setWindowSize ~window ~width:(size.a |> Int.of_float) ~height:(size.b |> Int.of_float)
+        Window.set_size ~window ~width:(size.a |> Int.of_float) ~height:(size.b |> Int.of_float)
 
     method background = background
     method setBackground b = background <- b
@@ -52,10 +50,7 @@ class screen initial_size nvg_context glfw_window = object(self)
             layoutDirty <- false;
             self#performLayoutEntry;
         );
-
-        let c = 0.17647058823529413 in
-        Gl.clear_color c c c 1.;
-        Gl.clear Gl.(color_buffer_bit + depth_buffer_bit + stencil_buffer_bit);
+        Context.clear ~window;
         self#drawContents;
         self#drawWidgets;
 
@@ -77,12 +72,12 @@ class screen initial_size nvg_context glfw_window = object(self)
     method mousePos = mousePos
 
     method performLayoutEntry =
-        let start = GLFW.getTime() in
+        let start = Time.now() in
         super#performLayout nvgContext;
-        lastLayoutTime <- ((GLFW.getTime()) -. start) *. 1000.;
+        lastLayoutTime <- ((Time.now()) -. start) *. 1000.;
 
     method cursorPosCallbackEvent (x : float) (y : float) =
-        lastInteraction <- GLFW.getTime();
+        lastInteraction <- Time.now();
         let p = Vec2.mk 
             ((x /. pixelRatio) -.1.) ((y /. pixelRatio)-.2.) 
         (* TODO why subtract? *) in
@@ -93,7 +88,7 @@ class screen initial_size nvg_context glfw_window = object(self)
             (*
             (find_widget p >>= fun widget ->
             widget#cursor >>| fun cursor ->
-            GLFW.setCursor ~window ~cursor
+            Cursor.set_cursor ~window ~cursor
             ) |> ignore
             *)
             ()
@@ -129,9 +124,9 @@ class screen initial_size nvg_context glfw_window = object(self)
             dispatch_event_by_position (self :> widget) event mousePos
         )
 
-    method mouseButtonCallbackEvent (button : int) (down : bool) (mods : GLFW.key_mod list) = 
+    method mouseButtonCallbackEvent (button : int) (down : bool) (mods : Key.modifier list) = 
         modifiers <- mods;
-        lastInteraction <- GLFW.getTime();
+        lastInteraction <- Time.now();
 
         let same_widget a b =
             match a, b with
@@ -157,10 +152,10 @@ class screen initial_size nvg_context glfw_window = object(self)
 
         (drop_widget >>= fun dropWidget ->
          dropWidget#cursor >>| fun cursor ->
-         GLFW.setCursor ~window ~cursor
+         Cursor.set_cursor ~window ~cursor
         ) |> ignore;
 
-        if down && (button = GLFW.mouse_button_left || button = GLFW.mouse_button_right) then (
+        if down && (button = Mouse.button_left || button = Mouse.button_right) then (
             dragWidget <- drop_widget;
             if same_widget (Some (self :> widget)) dragWidget then (
                 dragWidget <- None;
@@ -185,19 +180,19 @@ class screen initial_size nvg_context glfw_window = object(self)
     method removePopup (w : widget_spec) : unit =
         popups <- List.filter popups ~f:(fun p -> phys_equal w p |> not)
 
-    method keyCallbackEvent (key : GLFW.key) (scancode : int) (action : GLFW.key_action) (mods : GLFW.key_mod list) = 
-        lastInteraction <- GLFW.getTime();
+    method keyCallbackEvent (key : Key.key) (scancode : int) (action : Key.action) (mods : Key.modifier list) = 
+        lastInteraction <- Time.now();
         self#dispatchEventToFocused (KeyboardKey {key; scancode; action; mods})
 
     method charCallbackEvent (codepoint : int) = 
-        lastInteraction <- GLFW.getTime();
+        lastInteraction <- Time.now();
         self#dispatchEventToFocused (KeyboardChar codepoint)
 
     method dropCallbackEvent (filenames : string list) =
         dispatch_event_by_position (self :> widget) (FileDrop filenames) mousePos;
 
     method scrollCallbackEvent (x : float) (y : float) = 
-        lastInteraction <- GLFW.getTime();
+        lastInteraction <- Time.now();
         let event = ScrollEvent {pos=mousePos; rel=Vec2.(mk x y)} in
         let self = (self :> widget) in
         let before = find_widget self mousePos in
@@ -212,9 +207,9 @@ class screen initial_size nvg_context glfw_window = object(self)
         )
 
     method resizeCallbackEvent (_width : float) (_height : float) = 
-        lastInteraction <- GLFW.getTime();
-        let fbw, fbh = GLFW.getFramebufferSize ~window in
-        let ww, wh = GLFW.getWindowSize ~window in
+        lastInteraction <- Time.now();
+        let fbw, fbh = Context.get_framebuffer_size ~window in
+        let ww, wh = Window.get_size ~window in
 
         fbSize <- Vec2.mk Float.(of_int fbw) Float.(of_int fbh);
         size <- Vec2.mk Float.(of_int ww) Float.(of_int wh);
@@ -235,15 +230,15 @@ class screen initial_size nvg_context glfw_window = object(self)
 
     method drawWidgets =
         if visible then (
-            GLFW.makeContextCurrent ~window:(Some window);
+            Context.make_current ~window:(Some window);
 
-            let fbw, fbh = GLFW.getFramebufferSize ~window in
-            let ww, wh = GLFW.getWindowSize ~window in
+            let fbw, fbh = Context.get_framebuffer_size ~window in
+            let ww, wh = Window.get_size ~window in
             let ww = float ww in
             let wh = float wh in
             let ratio = (float fbw /. ww) in
             pixelRatio <- ratio;
-            Gl.viewport 0 0 fbw fbh;
+            Context.viewport ~window 0 0 fbw fbh;
             Gv.begin_frame nvgContext ~width:ww ~height:wh ~device_ratio:pixelRatio;
 
             (*
@@ -260,7 +255,7 @@ class screen initial_size nvg_context glfw_window = object(self)
             self#draw nvgContext;
 
             (* TODO - allow tooltip to be arbitrary widget *)
-            let elapsed = GLFW.getTime() -. lastInteraction in
+            let elapsed = Time.now() -. lastInteraction in
             if (elapsed > 0.5) then (
                 (* Draw tooltips *)
                 let widget, _ = find_widget (self :> widget) mousePos in

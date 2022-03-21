@@ -180,9 +180,9 @@ class multilineTextbox_inner parent = object(self)
 
 	method! keyboardEvent ~key ~scancode:_ ~action _mods =
 		if editable && focused then (
-			if action = GLFW.Press || action = GLFW.Repeat then (
+			if action = Key.Press || action = Key.Repeat then (
 				begin match key with
-				| GLFW.Enter -> 
+				| Key.Enter -> 
                         let a, b = TSM.(longest_line textState) in
                         Printf.printf "Longest line? %d %d\n%!" a b;
                         TSM.insert textState "\n";

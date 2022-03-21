@@ -16,7 +16,7 @@ class choice parent value = object(_self)
         id <- "choice"
 
     method! mouseButtonEvent ~pos:_ button down _mods = 
-        if button = GLFW.mouse_button_left && down then (
+        if button = Mouse.button_left && down then (
             selected <- not selected;
             changeCallback selected;
             true
