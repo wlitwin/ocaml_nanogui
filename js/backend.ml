@@ -10,12 +10,14 @@ module Window = struct
     let set_title ~window ~title =
         Dom_html.document##.title := Js.string title
 
-    let set_size ~window:_ ~width:_ ~height:_ =
-        ()
+    let set_size ~window ~width ~height =
+        window.node##.width := width;
+        window.node##.height := height;
+    ;;
 
     let get_size ~window =
-        let w = Dom_html.window##.innerWidth in
-        let h = Dom_html.window##.innerHeight in
+        let w = window.node##.width in
+        let h = window.node##.height in
         (w, h)
 
     let ctx_webgl canvas : WebGL.renderingContext Js.t =
@@ -33,14 +35,15 @@ module Window = struct
 
     let scale_canvas (canvas : Dom_html.canvasElement Js.t) (width : int) (height : int) =
         let dpr = Dom_html.window##.devicePixelRatio in
-        canvas##.style##.width := Printf.sprintf "%.2fpx" (float width /. dpr) |> Js.string;
-        canvas##.style##.height := Printf.sprintf "%.2fpx" (float height /. dpr) |> Js.string;
-        canvas##.width := width;
-        canvas##.height := height;
+        canvas##.style##.width := Printf.sprintf "%.2fpx" (float width) |> Js.string;
+        canvas##.style##.height := Printf.sprintf "%.2fpx" (float height) |> Js.string;
+        canvas##.width := Int.of_float (float width *. dpr);
+        canvas##.height := Int.of_float (float height *. dpr);
     ;;
 
     let create ~width ~height ~title : t * Gv.t =
         let canvas = Dom_html.createCanvas Dom_html.document in
+        Js.Unsafe.set canvas "tabIndex" 10;
         scale_canvas canvas width height;
         Dom_html.document##.body##appendChild (canvas :> Dom.node Js.t) |> ignore;
         let ctx = ctx_webgl canvas in
@@ -85,11 +88,11 @@ module Run = struct
         | [] -> ()
         | [screen] ->
             let rec draw _ =
-                idle();
+                Dom_html.window##requestAnimationFrame (Js.wrap_callback draw) |> ignore;
                 let start = Time.now() in
                 screen#drawAll;
                 t.last_render_time <- Time.now() -. start;
-                Dom_html.window##requestAnimationFrame (Js.wrap_callback draw) |> ignore;
+                idle();
             in
             Dom_html.window##requestAnimationFrame (Js.wrap_callback draw) |> ignore;
         | screens ->
@@ -274,6 +277,39 @@ module Key = struct
     | RightAlt
     | RightSuper
     | Menu
+
+    let of_code = function
+        | "Escape" -> Escape
+        | "Backspace" -> Backspace
+        | "Delete" -> Delete
+        | "Enter" -> Enter
+        | "KeyA" -> A
+        | "KeyB" -> B
+        | "KeyC" -> C
+        | "KeyD" -> D
+        | "KeyE" -> E
+        | "KeyF" -> F
+        | "KeyG" -> G
+        | "KeyH" -> H
+        | "KeyI" -> I
+        | "KeyJ" -> J
+        | "KeyK" -> K
+        | "KeyL" -> L
+        | "KeyM" -> M
+        | "KeyN" -> N
+        | "KeyO" -> O
+        | "KeyP" -> P
+        | "KeyQ" -> Q
+        | "KeyR" -> R
+        | "KeyS" -> S
+        | "KeyT" -> T
+        | "KeyU" -> U
+        | "KeyV" -> V
+        | "KeyW" -> W
+        | "KeyX" -> X
+        | "KeyY" -> Y
+        | "KeyZ" -> Z
+        | _ -> Unknown
 end
 
 module Listener = struct
@@ -288,19 +324,31 @@ module Listener = struct
         dropCallbackEvent : string list -> unit;
     >
 
+    let event_mods evt =
+        let l = if evt##.altKey |> Js.to_bool then [Key.Alt] else [] in
+        let l = if evt##.shiftKey |> Js.to_bool then Key.Shift :: l else l in
+        let l = if evt##.ctrlKey |> Js.to_bool then Key.Control :: l else l in
+        if evt##.metaKey |> Js.to_bool then Key.Super :: l else l
+    ;;
+
     let listen (t : t) (window : Window.t) =
         let open Window in
         window.node##.onmousedown := (Dom_html.handler (fun e ->
-            t#mouseButtonCallbackEvent e##.button true [] |> ignore;
+            t#mouseButtonCallbackEvent e##.button true (event_mods e) |> ignore;
             Js._true
         ));
         window.node##.onmouseup := (Dom_html.handler (fun e ->
-            t#mouseButtonCallbackEvent e##.button false [] |> ignore;
+            t#mouseButtonCallbackEvent e##.button false (event_mods e) |> ignore;
             Js._true
         ));
         window.node##.onmousemove := (Dom_html.handler (fun e ->
-            let dpr = Dom_html.window##.devicePixelRatio in
-            t#cursorPosCallbackEvent (float e##.offsetX *. dpr) (float e##.offsetY *. dpr) |> ignore;
+            let node = window.node in
+            let rect = node##getBoundingClientRect in
+            let sx = float node##.width /. (rect##.right -. rect##.left) in
+            let sy = float node##.height /. (rect##.bottom -. rect##.top) in
+            let x = (float e##.clientX -. rect##.left) *. sx in
+            let y = (float e##.clientY -. rect##.top) *. sy in
+            t#cursorPosCallbackEvent x y |> ignore;
             Js._true
         ));
         window.node##.onmouseover := (Dom_html.handler (fun _ ->
@@ -311,15 +359,47 @@ module Listener = struct
             t#cursorEnterCallbackEvent false;
             Js._true
         ));
-        (*new ResizeObserver(outputsize).observe(textbox)*)
         ResizeObserver.observe ~node:window.node ~f:(fun a b ->
-            t#resizeCallbackEvent (float window.node##.width) (float window.node##.height) |> ignore;
+            let node = window.node in
+            let w = node##.width in
+            let h = node##.height in
+            t#resizeCallbackEvent (float w) (float h) |> ignore;
         ) () |> ignore;
-        (*
-        GLFW.setKeyCallback ~window:window ~f:(Some (fun _window key scancode action mods ->
-            t#keyCallbackEvent key scancode action mods |> ignore
-        )) |> ignore;
 
+        window.node##.onkeydown := (Dom_html.handler (fun e ->
+            Js.Optdef.iter e##.key (fun key ->
+                if key##.length = 1 then (
+                    t#charCallbackEvent (key##charCodeAt 0 |> Int.of_float) |> ignore;
+                )
+            );
+
+            Js.Optdef.iter e##.code (fun code ->
+                let s = Js.to_string code in
+                t#keyCallbackEvent (Key.of_code s) e##.keyCode Key.Press (event_mods e);
+            );
+            Js._true;
+        ));
+
+        window.node##.onkeyup := (Dom_html.handler (fun e ->
+            Js.Optdef.iter e##.code (fun code ->
+                let s = Js.to_string code in
+                t#keyCallbackEvent (Key.of_code s) e##.keyCode Key.Release (event_mods e);
+            );
+            Js._true;
+        ));
+
+        window.node##.ondrop := (Dom_html.handler (fun e ->
+            let files = e##.dataTransfer##.files in
+            Printf.printf "Got files %d\n%!" files##.length;
+            Js._true;
+        ));
+
+        window.node##.onscroll := (Dom_html.handler (fun e ->
+            (*t#scrollCallbackEvent 10. 20. |> ignore;*)
+            Js._true;
+        ));
+
+        (*
         GLFW.setCharCallback ~window:window ~f:(Some (fun _window codepoint ->
             t#charCallbackEvent codepoint |> ignore
         )) |> ignore;
@@ -328,13 +408,6 @@ module Listener = struct
             t#scrollCallbackEvent x y |> ignore
         )) |> ignore;
 
-        GLFW.setFramebufferSizeCallback ~window:window ~f:(Some (fun _window w h ->
-            t#resizeCallbackEvent (Float.of_int w) (Float.of_int h) |> ignore
-        )) |> ignore;
-
-        GLFW.setDropCallback ~window:window ~f:(Some (fun _window files ->
-            t#dropCallbackEvent files |> ignore
-        )) |> ignore;
         *)
 end
 
