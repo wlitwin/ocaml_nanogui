@@ -164,6 +164,19 @@ module Key = struct
     | Menu
 end
 
+module Listener = struct
+    type t = <
+        cursorPosCallback : int -> int -> bool;
+        cursorEnterCallback : bool -> unit;
+        keyCallbackEvent : Key.key -> int -> Key.action -> Key.modifier list -> unit;
+        charCallbackEvent : int -> unit;
+        mouseButtonCallbackEvent : Mouse.button -> bool -> Key.modifier list -> unit;
+        scrollCallbackEvent : int -> int -> unit;
+        resizeCallbackEvent : float -> float -> bool;
+        dropCallbackEvent : string list -> unit;
+    >
+end
+
 module Context = struct
     open Tgles2 
 

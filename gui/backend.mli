@@ -146,6 +146,18 @@ module Key : sig
     | RightSuper
     | Menu
 end
+module Listener : sig
+    type t = <
+        cursorPosCallback : int -> int -> bool;
+        cursorEnterCallback : bool -> unit;
+        keyCallbackEvent : Key.key -> int -> Key.action -> Key.modifier list -> unit;
+        charCallbackEvent : int -> unit;
+        mouseButtonCallbackEvent : Mouse.button -> bool -> Key.modifier list -> unit;
+        scrollCallbackEvent : int -> int -> unit;
+        resizeCallbackEvent : float -> float -> bool;
+        dropCallbackEvent : string list -> unit;
+    >
+end
 module Context : sig
     val get_framebuffer_size : window:Window.t -> int * int
     val make_current : window:Window.t option -> unit
