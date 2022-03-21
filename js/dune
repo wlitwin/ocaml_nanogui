@@ -1,0 +1,11 @@
+(library
+  (name ocaml_nanogui_webgl)
+  (public_name ocaml_nanogui.webgl)
+  (implements ocaml_nanogui)
+  (preprocess (pps js_of_ocaml-ppx))
+ (libraries 
+    ocaml_nanogui_libext
+    js_of_ocaml
+    graphv_webgl2
+ )
+  )

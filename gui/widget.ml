@@ -119,6 +119,7 @@ type ui_event += MouseButton of { pos:Vec2.t; button:int; down:bool; mods:modifi
                | KeyboardKey of { key:Key.key; scancode:int; action:Key.action; mods:modifiers }
                | KeyboardChar of int
                | FileDrop of string list (* filenames *)
+               (*
 let split_bounds bounds : float * float * float * float =
     let open Ctypes in
     let minx = !@bounds in
@@ -127,6 +128,7 @@ let split_bounds bounds : float * float * float * float =
     let maxy = !@(bounds +@ 3) in
     minx, miny, maxx, maxy
 ;;
+*)
 
 type graphics_context = Gv.t
 type color = Gv.Color.t

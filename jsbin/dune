@@ -1,0 +1,15 @@
+(executable
+ (modes byte js)
+ (name main)
+ (js_of_ocaml (flags (:standard --pretty)))
+ (preprocess (pps js_of_ocaml-ppx))
+ (libraries
+  js_of_ocaml
+  ocaml_nanogui.webgl
+  ocaml_nanogui
+ ))
+
+(alias
+  (name default)
+  (deps index.html))
+

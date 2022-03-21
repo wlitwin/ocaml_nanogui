@@ -1,3 +1,4 @@
+(*
 open! Widget
 open Float
 
@@ -109,3 +110,4 @@ class glcanvas parent = object(self)
         Gl.viewport (get 0) (get 1) (get 2) (get 3);
 
 end
+*)

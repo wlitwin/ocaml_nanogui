@@ -7,13 +7,9 @@
 (library 
  (public_name ocaml_nanogui)
  (libraries 
-    containers
     ocaml_nanogui_libext
-    ppx_blob
+    containers
     rope
-    tgls.tgles2
-    tgls.tgles3
-   ; nanovg
  )
  (virtual_modules backend)
  (inline_tests)
