@@ -17,7 +17,7 @@ module GLFWExtras = struct
   ;;
 end
 
-module Gv = Graphv_gles3_native
+module Gv = Graphv_gles3
 
 let init resources =
     let errorcb error desc =

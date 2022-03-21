@@ -1,0 +1,74 @@
+class TextEditor:
+    def __init__(self):
+        self.content = ""
+        self.lines = [0]
+        self.line = 0
+        self.cursor = 0
+
+    def typeIn(self, char):
+        self.lines[self.line] += 1
+        self.content = \
+            self.content[:self.cursor] + char \
+            + self.content[self.cursor:]
+        self.cursor += 1
+
+    def backspace(self):
+        if self.cursor > 0:
+            self.lines[self.line] -= 1
+
+            if self.lines[self.line] < 0 and len(self.lines) > 1:
+                self.lines.pop(self.line)
+                self.line -= 1
+                
+            self.content = \
+                self.content[:self.cursor-1] + \
+                self.content[self.cursor:]
+            self.cursor -= 1
+
+    def posInContent(self, line):
+        s = 0
+        for i in range(0, line):
+            s += self.lines[i]
+        return s
+
+    def moveUp(self):
+        if self.line > 0:
+            start = self.posInContent(self.line)
+            prev = self.posInContent(self.line-1)
+            col = self.cursor - start
+            self.cursor = prev + min(start - prev, col)
+            self.line -= 1
+
+    def moveDown(self):
+        if self.line < len(self.lines) - 1:
+            start = self.posInContent(self.line)
+            next = self.posInContent(self.line+1)
+            col = self.cursor - start
+            self.cursor = next + min(next - start, col)
+            self.line += 1
+
+    def moveCursor(self, dir):
+        if dir == 'left':
+            self.cursor = max(0, self.cursor-1)
+        elif dir == 'right':
+            self.cursor = min(self.cursor+1, len(self.content))
+        elif dir == 'down':
+            self.moveDown()
+        elif dir == 'up':
+            self.moveUp()
+
+    def typeString(self, str):
+        for c in str:
+            self.typeIn(c)
+
+    def __str__(self):
+        return self.toString()
+
+    def toString(self):
+        return self.content[:self.cursor] + \
+            '|' + self.content[self.cursor:]
+
+    def newline(self):
+        self.typeIn('\n')
+        self.line += 1
+        self.lines.insert(self.line, 0)

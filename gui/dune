@@ -14,7 +14,7 @@
     tgls.tgles2
     tgls.tgles3
     glfw-ocaml
-    graphv_gles3_native
+    graphv_gles3
    ; nanovg
  )
  (inline_tests)

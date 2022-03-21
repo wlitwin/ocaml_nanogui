@@ -3,7 +3,7 @@
 INSTALL_ARGS := $(if $(PREFIX),--prefix $(PREFIX),)
 
 all:
-	dune build bin/main.exe
+	dune build --profile release bin/main.exe
 
 run: all
 	_build/default/bin/main.exe
