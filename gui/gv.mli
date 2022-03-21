@@ -1,4 +1,4 @@
-type t
+type t = Graphv_gles3.t
 
 module Align : sig
   type t = int

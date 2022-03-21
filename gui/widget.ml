@@ -1,5 +1,3 @@
-module Gv = Graphv_gles3
-
 module Key = Backend.Key
 module Mouse = Backend.Mouse
 module Cursor = Backend.Cursor
