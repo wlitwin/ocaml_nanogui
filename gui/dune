@@ -13,10 +13,9 @@
     rope
     tgls.tgles2
     tgls.tgles3
-    glfw-ocaml
-    graphv_gles3
    ; nanovg
  )
+ (virtual_modules backend)
  (inline_tests)
  (preprocess
   (pps ppx_jane -allow-unannotated-ignores ppx_expect ppx_blob ppx_optcomp)))

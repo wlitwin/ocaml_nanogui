@@ -29,7 +29,7 @@ class screen initial_size nvg_context glfw_window = object(self)
 
     method lastLayoutTime = lastLayoutTime
 
-    method glfwWindow = window
+    method window = window
 
     method nvgContext = nvgContext
 

@@ -116,7 +116,7 @@ class textbox parent in_value = object(self)
         match self#screen with
         | None -> ()
         | Some screen ->
-            let str = Clipboard.get_string ~window:screen#glfwWindow in
+            let str = Clipboard.get_string ~window:screen#window in
             valueTemp <- insert_at valueTemp cursorPos str
 
     method! mouseButtonEvent ~pos button down mods = 
@@ -201,7 +201,7 @@ class textbox parent in_value = object(self)
                 in
 
                 Clipboard.set_string
-                    ~window:screen#glfwWindow 
+                    ~window:screen#window 
                     ~string:String.(sub valueTemp ~pos:start ~len:(end_ - start));
             true
         ) else false

@@ -3,6 +3,7 @@
  (public_name ocaml_nanogui.async)
  (libraries 
     async_kernel
+    ocaml_nanogui.glfw3
     ocaml_nanogui
  )
  (inline_tests)

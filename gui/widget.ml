@@ -3,6 +3,7 @@ module Mouse = Backend.Mouse
 module Cursor = Backend.Cursor
 module Time = Backend.Time
 module Clipboard = Backend.Clipboard
+module Gv = Backend.Gv
 
 module Event : sig
     type phase = Down
@@ -268,7 +269,7 @@ and screen_spec = <
     pixelRatio : float;
     size : Vec2.t;
     updateFocus : widget_spec option -> unit; 
-    glfwWindow : Backend.Window.t;
+    window : Backend.Window.t;
     addChild : int -> widget_spec -> unit;
     addChildWidget : widget_spec -> unit; 
     setLayoutDirty : unit;

@@ -1,0 +1,13 @@
+(library
+  (name ocaml_nanogui_glfw3)
+  (public_name ocaml_nanogui.glfw3)
+  (implements ocaml_nanogui)
+ (libraries 
+    ocaml_nanogui_libext
+    tgls.tgles2
+    tgls.tgles3
+    glfw-ocaml
+    graphv_gles3
+   ; nanovg
+ )
+  )

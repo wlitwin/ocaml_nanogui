@@ -129,7 +129,7 @@ let _ =
 
     Application.run app [screen1] ~idle:(fun () ->
         PerfCounter.mark_event fps_counter;
-        total_render_time := !total_render_time +. !Application.last_render_time;
+        total_render_time := !total_render_time (*+. !Application.last_render_time*);
         layout_lbl#setText (Printf.sprintf "Layout %.3fms" screen1#lastLayoutTime);
     );
 ;;

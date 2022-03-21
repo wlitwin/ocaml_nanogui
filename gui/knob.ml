@@ -24,7 +24,7 @@ class knob parent ~min ~max ~value = object(_self)
         Float.lerp minValue maxValue ~t
 
     method! draw ctx =
-        let open Gv in
+        let open Widget.Gv in
         let open Float in
 
         let center = Vec2.(size * 0.5) in
